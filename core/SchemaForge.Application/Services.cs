@@ -71,8 +71,14 @@ public sealed class ExplorerService(
         {
             await queryHistoryStore.AddAsync(entry, cancellationToken);
         }
-        catch
+        catch (Exception exception)
         {
+            Trace.TraceError(
+                "Failed to record query history for connection '{0}' at '{1:O}'. Status: {2}. Error: {3}",
+                entry.ConnectionId,
+                entry.ExecutedAtUtc,
+                entry.Status,
+                exception);
         }
     }
 
