@@ -1,0 +1,12 @@
+{
+    "root": [
+        "./src/i18n.ts",
+        "./src/main.tsx",
+        "./src/api/client.ts",
+        "./src/components/connectionform.tsx",
+        "./src/features/explorer/explorerpanel.tsx",
+        "./src/pages/app.tsx",
+        "./src/types/index.ts"
+    ],
+    "version": "5.9.3"
+}

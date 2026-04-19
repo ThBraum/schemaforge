@@ -1,0 +1,8 @@
+# Rust / Cargo
+target/
+**/target/
+
+# Tauri build artifacts
+.tauri/build/
+
+Cargo.lock

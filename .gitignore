@@ -1,0 +1,44 @@
+# General OS / editor
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Node / frontend
+/apps/desktop-ui/node_modules/
+/apps/desktop-ui/dist/
+/apps/desktop-ui/.env
+/apps/desktop-ui/.env.local
+/apps/desktop-ui/.vite/
+
+# Vite / build
+/dist/
+/build/
+
+# .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+*.nupkg
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+
+# Rust / Tauri
+/src-tauri/target/
+/src-tauri/Cargo.lock
+
+# Misc
+coverage/
+/.cache/

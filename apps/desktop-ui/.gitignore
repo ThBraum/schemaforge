@@ -1,0 +1,14 @@
+# Node/Vite artifacts
+node_modules/
+dist/
+.vite/
+
+# Environment
+.env
+.env.local
+
+# Logs
+npm-debug.log*
+
+# OS
+.DS_Store
