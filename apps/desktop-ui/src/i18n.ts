@@ -58,7 +58,27 @@ export type TranslationKey =
 	| "snapshotNamePlaceholder"
 	| "snapshotsEmpty"
 	| "viewSnapshot"
-	| "snapshotDetailsTitle";
+	| "snapshotDetailsTitle"
+	| "schemaDiffTitle"
+	| "sourceSnapshotLabel"
+	| "targetSnapshotLabel"
+	| "compareSnapshots"
+	| "schemaDiffEmpty"
+	| "schemaDiffSummaryTitle"
+	| "tablesAddedLabel"
+	| "tablesRemovedLabel"
+	| "tablesModifiedLabel"
+	| "columnsAddedLabel"
+	| "columnsRemovedLabel"
+	| "columnsModifiedLabel"
+	| "breakingChangesLabel"
+	| "modifiedTablesLabel"
+	| "constraintsChangedLabel"
+	| "indexesChangedLabel"
+	| "beforeLabel"
+	| "afterLabel"
+	| "exportJson"
+	| "exportHtml";
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
 	en: {
@@ -115,6 +135,26 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		snapshotsEmpty: "No snapshots captured yet.",
 		viewSnapshot: "View",
 		snapshotDetailsTitle: "Snapshot details",
+		schemaDiffTitle: "Schema diff",
+		sourceSnapshotLabel: "Source snapshot",
+		targetSnapshotLabel: "Target snapshot",
+		compareSnapshots: "Compare snapshots",
+		schemaDiffEmpty: "Select source and target snapshots to compare.",
+		schemaDiffSummaryTitle: "Diff summary",
+		tablesAddedLabel: "Tables added",
+		tablesRemovedLabel: "Tables removed",
+		tablesModifiedLabel: "Tables modified",
+		columnsAddedLabel: "Columns added",
+		columnsRemovedLabel: "Columns removed",
+		columnsModifiedLabel: "Columns modified",
+		breakingChangesLabel: "Breaking changes",
+		modifiedTablesLabel: "Modified tables",
+		constraintsChangedLabel: "Constraints changed",
+		indexesChangedLabel: "Indexes changed",
+		beforeLabel: "Before",
+		afterLabel: "After",
+		exportJson: "Export JSON",
+		exportHtml: "Export HTML",
 	},
 	"pt-BR": {
 		appTitle: "SchemaForge",
@@ -170,6 +210,26 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		snapshotsEmpty: "Nenhum snapshot capturado ainda.",
 		viewSnapshot: "Ver",
 		snapshotDetailsTitle: "Detalhes do snapshot",
+		schemaDiffTitle: "Schema diff",
+		sourceSnapshotLabel: "Snapshot de origem",
+		targetSnapshotLabel: "Snapshot de destino",
+		compareSnapshots: "Comparar snapshots",
+		schemaDiffEmpty: "Selecione snapshots de origem e destino para comparar.",
+		schemaDiffSummaryTitle: "Resumo do diff",
+		tablesAddedLabel: "Tabelas adicionadas",
+		tablesRemovedLabel: "Tabelas removidas",
+		tablesModifiedLabel: "Tabelas modificadas",
+		columnsAddedLabel: "Colunas adicionadas",
+		columnsRemovedLabel: "Colunas removidas",
+		columnsModifiedLabel: "Colunas modificadas",
+		breakingChangesLabel: "Mudanças críticas",
+		modifiedTablesLabel: "Tabelas modificadas",
+		constraintsChangedLabel: "Constraints alteradas",
+		indexesChangedLabel: "Índices alterados",
+		beforeLabel: "Antes",
+		afterLabel: "Depois",
+		exportJson: "Exportar JSON",
+		exportHtml: "Exportar HTML",
 	},
 };
 

@@ -1,6 +1,9 @@
 using SchemaForge.Application;
 using SchemaForge.Infrastructure;
 using SchemaForge.Domain;
+using System.Net;
+using System.Text;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +32,8 @@ builder.Services.AddScoped<ExplorerService>();
 builder.Services.AddScoped<SavedQueryService>();
 builder.Services.AddScoped<QueryHistoryService>();
 builder.Services.AddScoped<SchemaSnapshotService>();
+builder.Services.AddSingleton<ISchemaDiffEngine, SchemaDiffEngine>();
+builder.Services.AddScoped<SchemaDiffService>();
 
 var app = builder.Build();
 app.UseCors();
@@ -240,9 +245,88 @@ app.MapGet("/api/snapshots/item/{snapshotId:guid}", async (Guid snapshotId, Sche
     });
 });
 
+app.MapPost("/api/schema-diff/compare", async (CompareSnapshotsRequest request, SchemaDiffService service, CancellationToken ct) =>
+{
+        var diff = await service.CompareAsync(request.SourceSnapshotId, request.TargetSnapshotId, ct);
+        return Results.Ok(diff);
+});
+
+app.MapGet("/api/schema-diff/details", async (Guid sourceSnapshotId, Guid targetSnapshotId, SchemaDiffService service, CancellationToken ct) =>
+{
+        var diff = await service.CompareAsync(sourceSnapshotId, targetSnapshotId, ct);
+        return Results.Ok(diff);
+});
+
+app.MapGet("/api/schema-diff/export/json", async (Guid sourceSnapshotId, Guid targetSnapshotId, SchemaDiffService service, CancellationToken ct) =>
+{
+        var diff = await service.CompareAsync(sourceSnapshotId, targetSnapshotId, ct);
+        var json = JsonSerializer.Serialize(diff, new JsonSerializerOptions
+        {
+                WriteIndented = true,
+        });
+
+        var fileName = $"schema-diff-{diff.SourceSnapshotId:N}-{diff.TargetSnapshotId:N}.json";
+        return Results.File(Encoding.UTF8.GetBytes(json), "application/json", fileName);
+});
+
+app.MapGet("/api/schema-diff/export/html", async (Guid sourceSnapshotId, Guid targetSnapshotId, SchemaDiffService service, CancellationToken ct) =>
+{
+        var diff = await service.CompareAsync(sourceSnapshotId, targetSnapshotId, ct);
+        var htmlBuilder = new StringBuilder();
+        htmlBuilder.AppendLine("<!doctype html>");
+        htmlBuilder.AppendLine("<html lang=\"en\">");
+        htmlBuilder.AppendLine("<head>");
+        htmlBuilder.AppendLine("<meta charset=\"utf-8\" />");
+        htmlBuilder.AppendLine("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />");
+        htmlBuilder.AppendLine("<title>Schema Diff Report</title>");
+        htmlBuilder.AppendLine("<style>");
+        htmlBuilder.AppendLine("body { font-family: Inter, Arial, sans-serif; margin: 32px; color: #0f172a; }");
+        htmlBuilder.AppendLine("h1, h2 { margin: 0 0 12px; }");
+        htmlBuilder.AppendLine(".small { color: #475569; margin-bottom: 24px; }");
+        htmlBuilder.AppendLine(".grid { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }");
+        htmlBuilder.AppendLine(".card { border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; background: #f8fafc; }");
+        htmlBuilder.AppendLine("ul { margin-top: 6px; }");
+        htmlBuilder.AppendLine("</style>");
+        htmlBuilder.AppendLine("</head>");
+        htmlBuilder.AppendLine("<body>");
+        htmlBuilder.AppendLine("<h1>Schema Diff Report</h1>");
+        htmlBuilder.AppendLine($"<p class=\"small\">Source: {WebUtility.HtmlEncode(diff.SourceSnapshotName)} · Target: {WebUtility.HtmlEncode(diff.TargetSnapshotName)} · Generated: {diff.GeneratedAtUtc:O}</p>");
+        htmlBuilder.AppendLine("<div class=\"grid\">");
+        htmlBuilder.AppendLine($"<div class=\"card\"><strong>Tables Added</strong><div>{diff.Summary.TablesAdded}</div></div>");
+        htmlBuilder.AppendLine($"<div class=\"card\"><strong>Tables Removed</strong><div>{diff.Summary.TablesRemoved}</div></div>");
+        htmlBuilder.AppendLine($"<div class=\"card\"><strong>Tables Modified</strong><div>{diff.Summary.TablesModified}</div></div>");
+        htmlBuilder.AppendLine($"<div class=\"card\"><strong>Columns Added</strong><div>{diff.Summary.ColumnsAdded}</div></div>");
+        htmlBuilder.AppendLine($"<div class=\"card\"><strong>Columns Removed</strong><div>{diff.Summary.ColumnsRemoved}</div></div>");
+        htmlBuilder.AppendLine($"<div class=\"card\"><strong>Columns Modified</strong><div>{diff.Summary.ColumnsModified}</div></div>");
+        htmlBuilder.AppendLine($"<div class=\"card\"><strong>Foreign Keys Added</strong><div>{diff.Summary.ForeignKeysAdded}</div></div>");
+        htmlBuilder.AppendLine($"<div class=\"card\"><strong>Foreign Keys Removed</strong><div>{diff.Summary.ForeignKeysRemoved}</div></div>");
+        htmlBuilder.AppendLine($"<div class=\"card\"><strong>Breaking Changes</strong><div>{diff.Summary.BreakingChanges}</div></div>");
+        htmlBuilder.AppendLine("</div>");
+        htmlBuilder.AppendLine("<h2>Breaking Changes</h2>");
+        htmlBuilder.AppendLine("<ul>");
+
+        foreach (var item in diff.BreakingChanges)
+        {
+                var columnSuffix = string.IsNullOrWhiteSpace(item.ColumnName)
+                    ? string.Empty
+                    : $".{WebUtility.HtmlEncode(item.ColumnName)}";
+
+                htmlBuilder.AppendLine($"<li><strong>{WebUtility.HtmlEncode(item.SchemaName)}.{WebUtility.HtmlEncode(item.TableName)}</strong>{columnSuffix}: {WebUtility.HtmlEncode(item.Description)}</li>");
+        }
+
+        htmlBuilder.AppendLine("</ul>");
+        htmlBuilder.AppendLine("</body>");
+        htmlBuilder.AppendLine("</html>");
+        var html = htmlBuilder.ToString();
+
+        var fileName = $"schema-diff-{diff.SourceSnapshotId:N}-{diff.TargetSnapshotId:N}.html";
+        return Results.File(Encoding.UTF8.GetBytes(html), "text/html", fileName);
+});
+
 app.Run("http://127.0.0.1:5051");
 
 public sealed record ConnectionRequest(Guid Id, string Name, string DatabaseType, string Host, int Port, string Database, string Username, string? Password);
 public sealed record QueryRequest(string Sql);
 public sealed record SaveSavedQueryRequest(Guid? Id, Guid ConnectionId, string Title, string Sql, string[]? Tags);
 public sealed record CaptureSnapshotRequest(string? Name);
+public sealed record CompareSnapshotsRequest(Guid SourceSnapshotId, Guid TargetSnapshotId);

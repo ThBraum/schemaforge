@@ -15,6 +15,10 @@ At its current stage, SchemaForge provides the foundation for a desktop database
 - Table preview
 - Basic query execution
 - Internal application storage using SQLite
+- Saved queries (CRUD by connection)
+- Query execution history
+- Schema snapshots
+- Schema diff between snapshots
 
 ## Vision
 

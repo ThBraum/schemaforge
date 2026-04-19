@@ -6,6 +6,7 @@ import type {
   QueryResult,
   SavedConnection,
   SavedQueryItem,
+  SchemaDiffResult,
   SchemaSnapshot,
   SchemaSnapshotSummary,
   SchemaSummary,
@@ -32,7 +33,11 @@ export function ExplorerPanel({ connection, t }: Props) {
   const [snapshots, setSnapshots] = useState<SchemaSnapshotSummary[]>([]);
   const [snapshotName, setSnapshotName] = useState('');
   const [selectedSnapshot, setSelectedSnapshot] = useState<SchemaSnapshot | null>(null);
+  const [sourceSnapshotId, setSourceSnapshotId] = useState('');
+  const [targetSnapshotId, setTargetSnapshotId] = useState('');
+  const [schemaDiff, setSchemaDiff] = useState<SchemaDiffResult | null>(null);
   const [isCapturingSnapshot, setIsCapturingSnapshot] = useState(false);
+  const [isComparingSnapshots, setIsComparingSnapshots] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,6 +50,9 @@ export function ExplorerPanel({ connection, t }: Props) {
         setQueryHistory([]);
         setSnapshots([]);
         setSelectedSnapshot(null);
+        setSourceSnapshotId('');
+        setTargetSnapshotId('');
+        setSchemaDiff(null);
         setEditingSavedQueryId(null);
         setSavedQueryTitle('');
         setSavedQueryTags('');
@@ -64,6 +72,12 @@ export function ExplorerPanel({ connection, t }: Props) {
         setSavedQueries(savedQueriesResult);
         setQueryHistory(historyResult);
         setSnapshots(snapshotsResult);
+        setSchemaDiff(null);
+
+        const latestSnapshot = snapshotsResult[0];
+        const previousSnapshot = snapshotsResult[1];
+        setTargetSnapshotId(latestSnapshot?.id ?? '');
+        setSourceSnapshotId(previousSnapshot?.id ?? '');
 
         const firstTable = schemaResult.schemas.flatMap((item) => item.tables)[0] ?? null;
         setSelectedTable(firstTable);
@@ -178,6 +192,8 @@ export function ExplorerPanel({ connection, t }: Props) {
       ]);
 
       setSnapshots(allSnapshots);
+      setSourceSnapshotId((current) => current || allSnapshots[1]?.id || '');
+      setTargetSnapshotId(allSnapshots[0]?.id || snapshot.id);
       setSelectedSnapshot(snapshotDetails);
       setSnapshotName('');
     } catch (err) {
@@ -194,6 +210,48 @@ export function ExplorerPanel({ connection, t }: Props) {
       setSelectedSnapshot(snapshot);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao carregar snapshot');
+    }
+  }
+
+  async function handleCompareSnapshots() {
+    if (!sourceSnapshotId || !targetSnapshotId || sourceSnapshotId === targetSnapshotId) {
+      setError('Selecione snapshots diferentes para comparar.');
+      return;
+    }
+
+    try {
+      setError(null);
+      setIsComparingSnapshots(true);
+      const diff = await api.compareSnapshots(sourceSnapshotId, targetSnapshotId);
+      setSchemaDiff(diff);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao comparar snapshots');
+    } finally {
+      setIsComparingSnapshots(false);
+    }
+  }
+
+  async function handleExportSchemaDiff(format: 'json' | 'html') {
+    if (!sourceSnapshotId || !targetSnapshotId) {
+      setError('Selecione snapshots para exportar.');
+      return;
+    }
+
+    try {
+      setError(null);
+      const blob = format === 'json'
+        ? await api.exportSchemaDiffJson(sourceSnapshotId, targetSnapshotId)
+        : await api.exportSchemaDiffHtml(sourceSnapshotId, targetSnapshotId);
+
+      const fileName = `schema-diff-${sourceSnapshotId}-${targetSnapshotId}.${format}`;
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = fileName;
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao exportar schema diff');
     }
   }
 
@@ -493,6 +551,135 @@ export function ExplorerPanel({ connection, t }: Props) {
                   </details>
                 ))}
               </div>
+            )}
+          </div>
+
+          <div className="card panel-card">
+            <div className="card-header">
+              <div>
+                <p className="eyebrow">{t('schemaDiffTitle')}</p>
+                <h3>{t('schemaDiffTitle')}</h3>
+              </div>
+              <div className="row">
+                <button onClick={() => handleExportSchemaDiff('json')} disabled={!sourceSnapshotId || !targetSnapshotId}>{t('exportJson')}</button>
+                <button onClick={() => handleExportSchemaDiff('html')} disabled={!sourceSnapshotId || !targetSnapshotId}>{t('exportHtml')}</button>
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="field" style={{ flex: 1 }}>
+                <label>{t('sourceSnapshotLabel')}</label>
+                <select value={sourceSnapshotId} onChange={(event) => setSourceSnapshotId(event.target.value)}>
+                  <option value="">-</option>
+                  {snapshots.map((snapshot) => (
+                    <option key={`source-${snapshot.id}`} value={snapshot.id}>
+                      {(snapshot.name || snapshot.id)} · {new Date(snapshot.createdAtUtc).toLocaleString()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field" style={{ flex: 1 }}>
+                <label>{t('targetSnapshotLabel')}</label>
+                <select value={targetSnapshotId} onChange={(event) => setTargetSnapshotId(event.target.value)}>
+                  <option value="">-</option>
+                  {snapshots.map((snapshot) => (
+                    <option key={`target-${snapshot.id}`} value={snapshot.id}>
+                      {(snapshot.name || snapshot.id)} · {new Date(snapshot.createdAtUtc).toLocaleString()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="row">
+              <button className="primary-button" onClick={handleCompareSnapshots} disabled={isComparingSnapshots || !sourceSnapshotId || !targetSnapshotId || sourceSnapshotId === targetSnapshotId}>
+                {isComparingSnapshots ? '...' : t('compareSnapshots')}
+              </button>
+            </div>
+
+            {!schemaDiff ? (
+              <p className="small">{t('schemaDiffEmpty')}</p>
+            ) : (
+              <>
+                <div className="card diff-summary-card">
+                  <p className="eyebrow">{t('schemaDiffSummaryTitle')}</p>
+                  <div className="diff-summary-grid">
+                    <div><strong>{t('tablesAddedLabel')}:</strong> {schemaDiff.summary.tablesAdded}</div>
+                    <div><strong>{t('tablesRemovedLabel')}:</strong> {schemaDiff.summary.tablesRemoved}</div>
+                    <div><strong>{t('tablesModifiedLabel')}:</strong> {schemaDiff.summary.tablesModified}</div>
+                    <div><strong>{t('columnsAddedLabel')}:</strong> {schemaDiff.summary.columnsAdded}</div>
+                    <div><strong>{t('columnsRemovedLabel')}:</strong> {schemaDiff.summary.columnsRemoved}</div>
+                    <div><strong>{t('columnsModifiedLabel')}:</strong> {schemaDiff.summary.columnsModified}</div>
+                    <div><strong>{t('breakingChangesLabel')}:</strong> {schemaDiff.summary.breakingChanges}</div>
+                  </div>
+                </div>
+
+                <details className="snapshot-details" open>
+                  <summary>{t('tablesAddedLabel')} ({schemaDiff.tablesAdded.length})</summary>
+                  <div className="list">
+                    {schemaDiff.tablesAdded.length === 0 ? <p className="small">-</p> : schemaDiff.tablesAdded.map((item) => (
+                      <div key={`added-${item.schemaName}.${item.tableName}`} className="list-item-card compact">
+                        <strong>{item.schemaName}.{item.tableName}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+
+                <details className="snapshot-details" open>
+                  <summary>{t('tablesRemovedLabel')} ({schemaDiff.tablesRemoved.length})</summary>
+                  <div className="list">
+                    {schemaDiff.tablesRemoved.length === 0 ? <p className="small">-</p> : schemaDiff.tablesRemoved.map((item) => (
+                      <div key={`removed-${item.schemaName}.${item.tableName}`} className="list-item-card compact">
+                        <strong>{item.schemaName}.{item.tableName}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+
+                <details className="snapshot-details" open>
+                  <summary>{t('modifiedTablesLabel')} ({schemaDiff.tablesModified.length})</summary>
+                  <div className="list">
+                    {schemaDiff.tablesModified.length === 0 ? <p className="small">-</p> : schemaDiff.tablesModified.map((table) => (
+                      <details key={`modified-${table.schemaName}.${table.tableName}`} className="snapshot-details">
+                        <summary>{table.schemaName}.{table.tableName}</summary>
+                        <div className="list">
+                          <p className="small">{t('columnsAddedLabel')}: {table.columnsAdded.length} · {t('columnsRemovedLabel')}: {table.columnsRemoved.length} · {t('columnsModifiedLabel')}: {table.columnsModified.length}</p>
+                          <p className="small">{t('constraintsChangedLabel')}: {table.primaryKeyChanged ? 1 : 0} + {table.foreignKeysAdded.length + table.foreignKeysRemoved.length}</p>
+                          <p className="small">{t('indexesChangedLabel')}: {table.indexesAdded.length + table.indexesRemoved.length}</p>
+
+                          {table.columnsModified.map((column) => (
+                            <div key={`${table.schemaName}.${table.tableName}.${column.columnName}`} className={`list-item-card compact ${column.isBreakingChange ? 'breaking-change' : ''}`}>
+                              <strong>{column.columnName}</strong>
+                              <p className="small">{t('beforeLabel')}: {column.sourceDataType} · {column.sourceIsNullable ? t('yes') : t('no')}</p>
+                              <p className="small">{t('afterLabel')}: {column.targetDataType} · {column.targetIsNullable ? t('yes') : t('no')}</p>
+                            </div>
+                          ))}
+
+                          {table.primaryKeyChanged ? (
+                            <div className="list-item-card compact">
+                              <strong>PK</strong>
+                              <p className="small">{t('beforeLabel')}: {table.sourcePrimaryKeyColumns.join(', ') || '-'}</p>
+                              <p className="small">{t('afterLabel')}: {table.targetPrimaryKeyColumns.join(', ') || '-'}</p>
+                            </div>
+                          ) : null}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </details>
+
+                <details className="snapshot-details">
+                  <summary>{t('breakingChangesLabel')} ({schemaDiff.breakingChanges.length})</summary>
+                  <div className="list">
+                    {schemaDiff.breakingChanges.length === 0 ? <p className="small">-</p> : schemaDiff.breakingChanges.map((item, index) => (
+                      <div key={`breaking-${index}`} className="list-item-card compact breaking-change">
+                        <strong>{item.schemaName}.{item.tableName}{item.columnName ? `.${item.columnName}` : ''}</strong>
+                        <p className="small">{item.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              </>
             )}
           </div>
         </div>

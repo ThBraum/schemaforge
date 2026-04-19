@@ -322,6 +322,22 @@ textarea:focus-visible {
   margin-bottom: 10px;
 }
 
+.diff-summary-card {
+  padding: 14px;
+}
+
+.diff-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.breaking-change {
+  border-color: color-mix(in srgb, #ff6b6b 55%, var(--border));
+  background: color-mix(in srgb, #ff6b6b 10%, var(--bg-soft));
+}
+
 .connection-item,
 .table-item {
   display: grid;
