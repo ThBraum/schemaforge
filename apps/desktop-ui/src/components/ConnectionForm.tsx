@@ -46,8 +46,8 @@ export function ConnectionForm({ onSave, t }: Props) {
         <label>{t('nameLabel')}</label>
         <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
       </div>
-      <div className="row">
-        <div className="field" style={{ flex: 1 }}>
+      <div className="connection-engine-row">
+        <div className="field engine-field">
           <label>{t('databaseLabel')}</label>
           <select
             value={form.databaseType}
@@ -64,7 +64,7 @@ export function ConnectionForm({ onSave, t }: Props) {
             <option value="mysql">MySQL</option>
           </select>
         </div>
-        <div className="field" style={{ width: 120 }}>
+        <div className="field port-field">
           <label>{t('portLabel')}</label>
           <input type="number" value={form.port} onChange={(e) => setForm({ ...form, port: Number(e.target.value) })} required />
         </div>

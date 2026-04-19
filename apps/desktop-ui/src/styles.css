@@ -290,6 +290,38 @@ textarea:focus-visible {
   gap: 10px;
 }
 
+.list-item-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-soft);
+}
+
+.list-item-card.compact {
+  gap: 6px;
+}
+
+.truncate-line {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.snapshot-details {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  background: var(--bg-soft);
+}
+
+.snapshot-details>summary {
+  cursor: pointer;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
 .connection-item,
 .table-item {
   display: grid;
@@ -469,6 +501,42 @@ pre {
 .connection-form input::placeholder,
 .connection-form textarea::placeholder {
   color: color-mix(in srgb, var(--muted) 70%, transparent);
+}
+
+.connection-form .connection-engine-row {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.connection-form .connection-engine-row .field {
+  margin-bottom: 12px;
+  min-width: 0;
+}
+
+.connection-form .connection-engine-row .engine-field {
+  grid-column: span 8;
+}
+
+.connection-form .connection-engine-row .port-field {
+  grid-column: span 4;
+}
+
+.connection-form .connection-engine-row input,
+.connection-form .connection-engine-row select {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .connection-form .connection-engine-row {
+    grid-template-columns: 1fr;
+  }
+
+  .connection-form .connection-engine-row .engine-field,
+  .connection-form .connection-engine-row .port-field {
+    grid-column: auto;
+  }
 }
 
 .language-menu {

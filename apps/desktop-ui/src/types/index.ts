@@ -51,3 +51,81 @@ export interface QueryResult {
   rowCount: number;
   durationMs: number;
 }
+
+export interface SavedQueryItem {
+  id: string;
+  connectionId: string;
+  title: string;
+  sql: string;
+  tags: string[];
+  createdAtUtc: string;
+  updatedAtUtc: string;
+}
+
+export type QueryExecutionStatus = 'succeeded' | 'failed';
+
+export interface QueryHistoryItem {
+  id: string;
+  connectionId: string;
+  sql: string;
+  status: QueryExecutionStatus;
+  durationMs: number;
+  errorMessage?: string | null;
+  executedAtUtc: string;
+}
+
+export interface SchemaSnapshotSummary {
+  id: string;
+  connectionId: string;
+  name?: string | null;
+  createdAtUtc: string;
+  schemaCount: number;
+  tableCount: number;
+}
+
+export interface SchemaSnapshot {
+  id: string;
+  connectionId: string;
+  name?: string | null;
+  createdAtUtc: string;
+  structure: DatabaseStructureSnapshot;
+}
+
+export interface DatabaseStructureSnapshot {
+  databaseName: string;
+  schemas: SnapshotSchemaNode[];
+}
+
+export interface SnapshotSchemaNode {
+  schemaName: string;
+  tables: SnapshotTableNode[];
+}
+
+export interface SnapshotTableNode {
+  schemaName: string;
+  tableName: string;
+  columns: SnapshotColumnNode[];
+  primaryKeyColumns: string[];
+  foreignKeys: SnapshotForeignKeyNode[];
+  indexes: SnapshotIndexNode[];
+}
+
+export interface SnapshotColumnNode {
+  name: string;
+  dataType: string;
+  isNullable: boolean;
+}
+
+export interface SnapshotForeignKeyNode {
+  name: string;
+  columnNames: string[];
+  referencedSchema: string;
+  referencedTable: string;
+  referencedColumnNames: string[];
+}
+
+export interface SnapshotIndexNode {
+  name: string;
+  columnNames: string[];
+  isUnique: boolean;
+}

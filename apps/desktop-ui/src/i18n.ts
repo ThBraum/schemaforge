@@ -40,7 +40,25 @@ export type TranslationKey =
 	| "msLabel"
 	| "nullLabel"
 	| "yes"
-	| "no";
+	| "no"
+	| "savedQueriesTitle"
+	| "savedQueriesEmpty"
+	| "savedQueryTitleLabel"
+	| "savedQueryTagsLabel"
+	| "saveCurrentQuery"
+	| "editSavedQuery"
+	| "newSavedQuery"
+	| "openSavedQuery"
+	| "deleteSavedQuery"
+	| "queryHistoryTitle"
+	| "queryHistoryEmpty"
+	| "reopenQuery"
+	| "snapshotTitle"
+	| "captureSnapshot"
+	| "snapshotNamePlaceholder"
+	| "snapshotsEmpty"
+	| "viewSnapshot"
+	| "snapshotDetailsTitle";
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
 	en: {
@@ -79,6 +97,24 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		nullLabel: "NULL",
 		yes: "Yes",
 		no: "No",
+		savedQueriesTitle: "Saved queries",
+		savedQueriesEmpty: "No saved queries yet.",
+		savedQueryTitleLabel: "Title",
+		savedQueryTagsLabel: "Tags (comma separated)",
+		saveCurrentQuery: "Save current query",
+		editSavedQuery: "Edit",
+		newSavedQuery: "New saved query",
+		openSavedQuery: "Open",
+		deleteSavedQuery: "Delete",
+		queryHistoryTitle: "Query history",
+		queryHistoryEmpty: "No query history for this connection yet.",
+		reopenQuery: "Reopen",
+		snapshotTitle: "Schema snapshots",
+		captureSnapshot: "Capture snapshot",
+		snapshotNamePlaceholder: "snapshot name (optional)",
+		snapshotsEmpty: "No snapshots captured yet.",
+		viewSnapshot: "View",
+		snapshotDetailsTitle: "Snapshot details",
 	},
 	"pt-BR": {
 		appTitle: "SchemaForge",
@@ -116,6 +152,24 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		nullLabel: "NULL",
 		yes: "Sim",
 		no: "Não",
+		savedQueriesTitle: "Queries salvas",
+		savedQueriesEmpty: "Nenhuma query salva ainda.",
+		savedQueryTitleLabel: "Título",
+		savedQueryTagsLabel: "Tags (separadas por vírgula)",
+		saveCurrentQuery: "Salvar query atual",
+		editSavedQuery: "Editar",
+		newSavedQuery: "Nova query salva",
+		openSavedQuery: "Abrir",
+		deleteSavedQuery: "Excluir",
+		queryHistoryTitle: "Histórico de queries",
+		queryHistoryEmpty: "Ainda não há histórico para esta conexão.",
+		reopenQuery: "Reabrir",
+		snapshotTitle: "Snapshots de schema",
+		captureSnapshot: "Capturar snapshot",
+		snapshotNamePlaceholder: "nome do snapshot (opcional)",
+		snapshotsEmpty: "Nenhum snapshot capturado ainda.",
+		viewSnapshot: "Ver",
+		snapshotDetailsTitle: "Detalhes do snapshot",
 	},
 };
 
