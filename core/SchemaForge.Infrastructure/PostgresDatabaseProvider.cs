@@ -41,17 +41,23 @@ select tc.constraint_name as ConstraintName,
        tc.table_schema as SchemaName,
        tc.table_name as TableName,
        kcu.column_name as ColumnName,
-       ccu.table_schema as ReferencedSchema,
-       ccu.table_name as ReferencedTable,
-       ccu.column_name as ReferencedColumnName,
+             ukcu.table_schema as ReferencedSchema,
+             ukcu.table_name as ReferencedTable,
+             ukcu.column_name as ReferencedColumnName,
        kcu.ordinal_position as Position
 from information_schema.table_constraints tc
 join information_schema.key_column_usage kcu
   on tc.constraint_name = kcu.constraint_name
+ and tc.constraint_schema = kcu.constraint_schema
  and tc.table_schema = kcu.table_schema
-join information_schema.constraint_column_usage ccu
-  on tc.constraint_name = ccu.constraint_name
- and tc.table_schema = ccu.table_schema
+ and tc.table_name = kcu.table_name
+join information_schema.referential_constraints rc
+    on tc.constraint_name = rc.constraint_name
+ and tc.constraint_schema = rc.constraint_schema
+join information_schema.key_column_usage ukcu
+    on rc.unique_constraint_name = ukcu.constraint_name
+ and rc.unique_constraint_schema = ukcu.constraint_schema
+ and kcu.position_in_unique_constraint = ukcu.ordinal_position
 where tc.constraint_type = 'FOREIGN KEY'
   and tc.table_schema not in ('information_schema', 'pg_catalog')
 order by tc.table_schema, tc.table_name, tc.constraint_name, kcu.ordinal_position;";

@@ -386,7 +386,7 @@ export function ExplorerPanel({ connection, t }: Props) {
                     </div>
                     <div className="row">
                       <button onClick={() => handleOpenSavedQuery(query)}>{t('openSavedQuery')}</button>
-                      <button onClick={() => handleEditSavedQuery(query)}>{t('saveCurrentQuery')}</button>
+                      <button onClick={() => handleEditSavedQuery(query)}>{t('editSavedQuery')}</button>
                       <button onClick={() => handleDeleteSavedQuery(query.id)}>{t('deleteSavedQuery')}</button>
                     </div>
                   </div>

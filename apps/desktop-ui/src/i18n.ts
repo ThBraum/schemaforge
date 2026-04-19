@@ -46,6 +46,7 @@ export type TranslationKey =
 	| "savedQueryTitleLabel"
 	| "savedQueryTagsLabel"
 	| "saveCurrentQuery"
+	| "editSavedQuery"
 	| "newSavedQuery"
 	| "openSavedQuery"
 	| "deleteSavedQuery"
@@ -101,6 +102,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		savedQueryTitleLabel: "Title",
 		savedQueryTagsLabel: "Tags (comma separated)",
 		saveCurrentQuery: "Save current query",
+		editSavedQuery: "Edit",
 		newSavedQuery: "New saved query",
 		openSavedQuery: "Open",
 		deleteSavedQuery: "Delete",
@@ -155,6 +157,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		savedQueryTitleLabel: "Título",
 		savedQueryTagsLabel: "Tags (separadas por vírgula)",
 		saveCurrentQuery: "Salvar query atual",
+		editSavedQuery: "Editar",
 		newSavedQuery: "Nova query salva",
 		openSavedQuery: "Abrir",
 		deleteSavedQuery: "Excluir",

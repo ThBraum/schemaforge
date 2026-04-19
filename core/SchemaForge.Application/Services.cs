@@ -34,7 +34,7 @@ public sealed class ExplorerService(
             var result = await provider.RunQueryAsync(connection, sql, cancellationToken);
             stopwatch.Stop();
 
-            await queryHistoryStore.AddAsync(new QueryHistoryEntry
+            await TryAddQueryHistoryAsync(new QueryHistoryEntry
             {
                 Id = Guid.NewGuid(),
                 ConnectionId = connectionId,
@@ -50,7 +50,7 @@ public sealed class ExplorerService(
         {
             stopwatch.Stop();
 
-            await queryHistoryStore.AddAsync(new QueryHistoryEntry
+            await TryAddQueryHistoryAsync(new QueryHistoryEntry
             {
                 Id = Guid.NewGuid(),
                 ConnectionId = connectionId,
@@ -62,6 +62,17 @@ public sealed class ExplorerService(
             }, cancellationToken);
 
             throw;
+        }
+    }
+
+    private async Task TryAddQueryHistoryAsync(QueryHistoryEntry entry, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await queryHistoryStore.AddAsync(entry, cancellationToken);
+        }
+        catch
+        {
         }
     }
 
@@ -89,6 +100,17 @@ public sealed class SavedQueryService(ISavedQueryStore savedQueryStore, IConnect
         _ = await GetConnectionOrThrowAsync(connectionId, cancellationToken);
 
         var existing = id.HasValue ? await savedQueryStore.GetAsync(id.Value, cancellationToken) : null;
+        if (existing is not null && existing.ConnectionId != connectionId)
+        {
+            throw new InvalidOperationException("Saved query does not belong to the provided connection.");
+        }
+
+        var normalizedTitle = title.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedTitle))
+        {
+            throw new ArgumentException("Title cannot be empty or whitespace.", nameof(title));
+        }
+
         var normalizedTags = (tags ?? Array.Empty<string>())
             .Select(x => x.Trim())
             .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -100,7 +122,7 @@ public sealed class SavedQueryService(ISavedQueryStore savedQueryStore, IConnect
         {
             Id = existing?.Id ?? id ?? Guid.NewGuid(),
             ConnectionId = connectionId,
-            Title = title.Trim(),
+            Title = normalizedTitle,
             Sql = sql,
             Tags = normalizedTags,
             CreatedAtUtc = existing?.CreatedAtUtc ?? now,

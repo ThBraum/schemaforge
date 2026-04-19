@@ -50,12 +50,19 @@ limit @Limit;", new
 
     private static QueryHistoryEntry Map(QueryHistoryRow row)
     {
+        var status = row.Status.Trim().ToLowerInvariant() switch
+        {
+            "succeeded" => QueryExecutionStatus.Succeeded,
+            "failed" => QueryExecutionStatus.Failed,
+            _ => throw new InvalidOperationException($"Unexpected query history status '{row.Status}'."),
+        };
+
         return new QueryHistoryEntry
         {
             Id = Guid.Parse(row.Id),
             ConnectionId = Guid.Parse(row.ConnectionId),
             Sql = row.Sql,
-            Status = row.Status.ToLowerInvariant() == "failed" ? QueryExecutionStatus.Failed : QueryExecutionStatus.Succeeded,
+            Status = status,
             DurationMs = row.DurationMs,
             ErrorMessage = row.ErrorMessage,
             ExecutedAtUtc = DateTime.SpecifyKind(row.ExecutedAtUtc, DateTimeKind.Utc),
@@ -64,18 +71,9 @@ limit @Limit;", new
 
     private static async Task EnsureSchemaAsync(Microsoft.Data.Sqlite.SqliteConnection connection)
     {
-        const string sql = @"
-create table if not exists app_connections (
-    id text primary key,
-    name text not null,
-    database_type text not null,
-    host text not null,
-    port integer not null,
-    database_name text not null,
-    username text not null,
-    password text null
-);
+        await SqliteLocalSchema.EnsureConnectionsTableAsync(connection);
 
+        const string sql = @"
 create table if not exists app_query_history (
     id text primary key,
     connection_id text not null,
