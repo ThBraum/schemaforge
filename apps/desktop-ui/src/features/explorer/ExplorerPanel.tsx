@@ -1,7 +1,17 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import type { TranslationKey } from '../../i18n';
-import type { QueryResult, SavedConnection, SchemaSummary, TableNode, TablePreview } from '../../types';
+import type {
+  QueryHistoryItem,
+  QueryResult,
+  SavedConnection,
+  SavedQueryItem,
+  SchemaSnapshot,
+  SchemaSnapshotSummary,
+  SchemaSummary,
+  TableNode,
+  TablePreview,
+} from '../../types';
 
 interface Props {
   connection: SavedConnection | null;
@@ -14,29 +24,55 @@ export function ExplorerPanel({ connection, t }: Props) {
   const [preview, setPreview] = useState<TablePreview | null>(null);
   const [sql, setSql] = useState('select 1 as status;');
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
+  const [savedQueries, setSavedQueries] = useState<SavedQueryItem[]>([]);
+  const [savedQueryTitle, setSavedQueryTitle] = useState('');
+  const [savedQueryTags, setSavedQueryTags] = useState('');
+  const [editingSavedQueryId, setEditingSavedQueryId] = useState<string | null>(null);
+  const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([]);
+  const [snapshots, setSnapshots] = useState<SchemaSnapshotSummary[]>([]);
+  const [snapshotName, setSnapshotName] = useState('');
+  const [selectedSnapshot, setSelectedSnapshot] = useState<SchemaSnapshot | null>(null);
+  const [isCapturingSnapshot, setIsCapturingSnapshot] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadSchema() {
+    async function loadInitialState() {
       if (!connection) {
         setSchema(null);
         setSelectedTable(null);
         setPreview(null);
+        setSavedQueries([]);
+        setQueryHistory([]);
+        setSnapshots([]);
+        setSelectedSnapshot(null);
+        setEditingSavedQueryId(null);
+        setSavedQueryTitle('');
+        setSavedQueryTags('');
         return;
       }
 
       try {
         setError(null);
-        const result = await api.getSchema(connection.id);
-        setSchema(result);
-        const firstTable = result.schemas.flatMap((item) => item.tables)[0] ?? null;
+        const [schemaResult, savedQueriesResult, historyResult, snapshotsResult] = await Promise.all([
+          api.getSchema(connection.id),
+          api.listSavedQueries(connection.id),
+          api.listQueryHistory(connection.id, 50),
+          api.listSnapshots(connection.id),
+        ]);
+
+        setSchema(schemaResult);
+        setSavedQueries(savedQueriesResult);
+        setQueryHistory(historyResult);
+        setSnapshots(snapshotsResult);
+
+        const firstTable = schemaResult.schemas.flatMap((item) => item.tables)[0] ?? null;
         setSelectedTable(firstTable);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Falha ao carregar schema');
       }
     }
 
-    loadSchema();
+    loadInitialState();
   }, [connection]);
 
   useEffect(() => {
@@ -63,8 +99,101 @@ export function ExplorerPanel({ connection, t }: Props) {
       setError(null);
       const result = await api.runQuery(connection.id, sql);
       setQueryResult(result);
+      const history = await api.listQueryHistory(connection.id, 50);
+      setQueryHistory(history);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao executar query');
+    }
+  }
+
+  async function handleSaveCurrentQuery() {
+    if (!connection) return;
+
+    try {
+      setError(null);
+
+      const tags = savedQueryTags
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      const title = savedQueryTitle.trim() || `Query ${new Date().toLocaleString()}`;
+      if (editingSavedQueryId) {
+        await api.updateSavedQuery(editingSavedQueryId, { connectionId: connection.id, title, sql, tags });
+      } else {
+        await api.saveSavedQuery({ connectionId: connection.id, title, sql, tags });
+      }
+
+      const result = await api.listSavedQueries(connection.id);
+      setSavedQueries(result);
+      setEditingSavedQueryId(null);
+      setSavedQueryTitle('');
+      setSavedQueryTags('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao salvar query');
+    }
+  }
+
+  async function handleDeleteSavedQuery(id: string) {
+    if (!connection) return;
+
+    try {
+      setError(null);
+      await api.deleteSavedQuery(id);
+      const result = await api.listSavedQueries(connection.id);
+      setSavedQueries(result);
+
+      if (editingSavedQueryId === id) {
+        setEditingSavedQueryId(null);
+        setSavedQueryTitle('');
+        setSavedQueryTags('');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao excluir query');
+    }
+  }
+
+  function handleEditSavedQuery(query: SavedQueryItem) {
+    setEditingSavedQueryId(query.id);
+    setSavedQueryTitle(query.title);
+    setSavedQueryTags(query.tags.join(', '));
+    setSql(query.sql);
+  }
+
+  function handleOpenSavedQuery(query: SavedQueryItem) {
+    setSql(query.sql);
+  }
+
+  async function handleCaptureSnapshot() {
+    if (!connection) return;
+
+    try {
+      setError(null);
+      setIsCapturingSnapshot(true);
+
+      const snapshot = await api.captureSnapshot(connection.id, snapshotName.trim() || undefined);
+      const [allSnapshots, snapshotDetails] = await Promise.all([
+        api.listSnapshots(connection.id),
+        api.getSnapshot(snapshot.id),
+      ]);
+
+      setSnapshots(allSnapshots);
+      setSelectedSnapshot(snapshotDetails);
+      setSnapshotName('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao capturar snapshot');
+    } finally {
+      setIsCapturingSnapshot(false);
+    }
+  }
+
+  async function handleViewSnapshot(snapshotId: string) {
+    try {
+      setError(null);
+      const snapshot = await api.getSnapshot(snapshotId);
+      setSelectedSnapshot(snapshot);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao carregar snapshot');
     }
   }
 
@@ -187,9 +316,35 @@ export function ExplorerPanel({ connection, t }: Props) {
               </div>
               <p className="small">SQL</p>
             </div>
+
+            <div className="row">
+              <input
+                value={savedQueryTitle}
+                onChange={(event) => setSavedQueryTitle(event.target.value)}
+                placeholder={t('savedQueryTitleLabel')}
+                style={{ flex: 1 }}
+              />
+              <input
+                value={savedQueryTags}
+                onChange={(event) => setSavedQueryTags(event.target.value)}
+                placeholder={t('savedQueryTagsLabel')}
+                style={{ flex: 1 }}
+              />
+            </div>
+
             <textarea value={sql} onChange={(e) => setSql(e.target.value)} placeholder={t('queryPlaceholder')} />
             <div className="row" style={{ marginTop: 12 }}>
               <button className="primary-button" onClick={handleRunQuery}>{t('runQuery')}</button>
+              <button onClick={handleSaveCurrentQuery}>{t('saveCurrentQuery')}</button>
+              <button
+                onClick={() => {
+                  setEditingSavedQueryId(null);
+                  setSavedQueryTitle('');
+                  setSavedQueryTags('');
+                }}
+              >
+                {t('newSavedQuery')}
+              </button>
             </div>
             {queryResult ? (
               <>
@@ -208,6 +363,137 @@ export function ExplorerPanel({ connection, t }: Props) {
                 </table>
               </>
             ) : null}
+          </div>
+
+          <div className="card panel-card">
+            <div className="card-header">
+              <div>
+                <p className="eyebrow">{t('savedQueriesTitle')}</p>
+                <h3>{t('savedQueriesTitle')}</h3>
+              </div>
+              <span className="badge subtle">{savedQueries.length}</span>
+            </div>
+
+            {savedQueries.length === 0 ? (
+              <p className="small">{t('savedQueriesEmpty')}</p>
+            ) : (
+              <div className="list">
+                {savedQueries.map((query) => (
+                  <div key={query.id} className="list-item-card">
+                    <div>
+                      <strong>{query.title}</strong>
+                      <p className="small">{query.tags.join(', ') || '-'}</p>
+                    </div>
+                    <div className="row">
+                      <button onClick={() => handleOpenSavedQuery(query)}>{t('openSavedQuery')}</button>
+                      <button onClick={() => handleEditSavedQuery(query)}>{t('saveCurrentQuery')}</button>
+                      <button onClick={() => handleDeleteSavedQuery(query.id)}>{t('deleteSavedQuery')}</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card panel-card">
+            <div className="card-header">
+              <div>
+                <p className="eyebrow">{t('queryHistoryTitle')}</p>
+                <h3>{t('queryHistoryTitle')}</h3>
+              </div>
+              <span className="badge subtle">{queryHistory.length}</span>
+            </div>
+
+            {queryHistory.length === 0 ? (
+              <p className="small">{t('queryHistoryEmpty')}</p>
+            ) : (
+              <div className="list">
+                {queryHistory.map((item) => (
+                  <div key={item.id} className="list-item-card">
+                    <div>
+                      <strong>{item.status}</strong>
+                      <p className="small">{item.durationMs} {t('msLabel')} · {new Date(item.executedAtUtc).toLocaleString()}</p>
+                      <p className="small truncate-line">{item.sql}</p>
+                    </div>
+                    <div className="row">
+                      <button onClick={() => setSql(item.sql)}>{t('reopenQuery')}</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card panel-card">
+            <div className="card-header">
+              <div>
+                <p className="eyebrow">{t('snapshotTitle')}</p>
+                <h3>{t('snapshotTitle')}</h3>
+              </div>
+              <span className="badge subtle">{snapshots.length}</span>
+            </div>
+
+            <div className="row">
+              <input
+                value={snapshotName}
+                onChange={(event) => setSnapshotName(event.target.value)}
+                placeholder={t('snapshotNamePlaceholder')}
+                style={{ flex: 1 }}
+              />
+              <button className="primary-button" onClick={handleCaptureSnapshot} disabled={isCapturingSnapshot}>
+                {isCapturingSnapshot ? '...' : t('captureSnapshot')}
+              </button>
+            </div>
+
+            {snapshots.length === 0 ? (
+              <p className="small">{t('snapshotsEmpty')}</p>
+            ) : (
+              <div className="list">
+                {snapshots.map((item) => (
+                  <div key={item.id} className="list-item-card">
+                    <div>
+                      <strong>{item.name || item.id}</strong>
+                      <p className="small">{new Date(item.createdAtUtc).toLocaleString()}</p>
+                      <p className="small">{item.schemaCount} schemas · {item.tableCount} {t('schemasTitle').toLowerCase()}</p>
+                    </div>
+                    <div className="row">
+                      <button onClick={() => handleViewSnapshot(item.id)}>{t('viewSnapshot')}</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card panel-card">
+            <div className="card-header">
+              <div>
+                <p className="eyebrow">{t('snapshotDetailsTitle')}</p>
+                <h3>{t('snapshotDetailsTitle')}</h3>
+              </div>
+            </div>
+
+            {!selectedSnapshot ? (
+              <p className="small">{t('snapshotsEmpty')}</p>
+            ) : (
+              <div className="list">
+                <p className="small"><strong>{selectedSnapshot.name || selectedSnapshot.id}</strong> · {new Date(selectedSnapshot.createdAtUtc).toLocaleString()}</p>
+                {selectedSnapshot.structure.schemas.map((schemaNode) => (
+                  <details key={schemaNode.schemaName} className="snapshot-details">
+                    <summary>{schemaNode.schemaName} ({schemaNode.tables.length})</summary>
+                    <div className="list">
+                      {schemaNode.tables.map((table) => (
+                        <div key={`${table.schemaName}.${table.tableName}`} className="list-item-card compact">
+                          <strong>{table.tableName}</strong>
+                          <p className="small">Cols: {table.columns.length} · PK: {table.primaryKeyColumns.join(', ') || '-'}</p>
+                          <p className="small">FK: {table.foreignKeys.length} · IDX: {table.indexes.length}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
