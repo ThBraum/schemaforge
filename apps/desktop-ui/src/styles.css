@@ -404,12 +404,23 @@ textarea:focus-visible {
   overflow: hidden;
 }
 
+.table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.table-scroll .table {
+  min-width: max-content;
+}
+
 .table th,
 .table td {
   border-bottom: 1px solid var(--border);
   padding: 10px 12px;
   text-align: left;
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .table th {

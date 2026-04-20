@@ -60,8 +60,8 @@ export function ConnectionForm({ onSave, t }: Props) {
               });
             }}
           >
-            <option value="postgres">PostgreSQL</option>
-            <option value="mysql">MySQL</option>
+            <option value="postgres">{t('postgresqlLabel')}</option>
+            <option value="mysql">{t('mysqlLabel')}</option>
           </select>
         </div>
         <div className="field port-field">

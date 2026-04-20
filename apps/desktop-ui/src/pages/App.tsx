@@ -104,7 +104,7 @@ export function App() {
               <span className="toggle-track">
                 <span className={`toggle-thumb ${theme}`}>{theme === 'dark' ? '◐' : '◑'}</span>
               </span>
-              <span>{theme === 'dark' ? 'Dark' : 'Light'}</span>
+              <span>{theme === 'dark' ? t.darkThemeLabel : t.lightThemeLabel}</span>
             </button>
           </div>
           <div className="control-group language-menu" ref={languageMenuRef}>
@@ -141,7 +141,7 @@ export function App() {
                       }}
                     >
                       <div>
-                        <strong>{details.menuLabel}</strong>
+                        <strong>{item.label}</strong>
                         <span>{details.shortLabel}</span>
                       </div>
                       <span className="language-flag" aria-hidden="true">{details.emoji}</span>
@@ -179,7 +179,11 @@ export function App() {
                     onClick={() => setSelectedConnectionId(connection.id)}
                   >
                     <span className="connection-name">{connection.name}</span>
-                    <span className="small">{connection.databaseType} · {connection.host}:{connection.port}</span>
+                    <span className="small">
+                      {connection.databaseType === 'postgres'
+                        ? t.postgresqlLabel
+                        : t.mysqlLabel} · {connection.host}:{connection.port}
+                    </span>
                   </button>
                   <button
                     className="danger-ghost"

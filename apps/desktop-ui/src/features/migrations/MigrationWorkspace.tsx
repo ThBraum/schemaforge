@@ -95,7 +95,7 @@ export function MigrationWorkspace({ connectionId, t }: Props) {
 				setDraft(toDraft(migrationsResult[0]));
 			}
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to load migrations");
+			setError(err instanceof Error ? err.message : t("failedLoadMigrations"));
 		}
 	}
 
@@ -124,7 +124,7 @@ export function MigrationWorkspace({ connectionId, t }: Props) {
 			await reloadAll();
 			setDraft(toDraft(generated));
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to generate migration from diff");
+			setError(err instanceof Error ? err.message : t("failedGenerateMigrationFromDiff"));
 		} finally {
 			setIsBusy(false);
 		}
@@ -140,12 +140,12 @@ export function MigrationWorkspace({ connectionId, t }: Props) {
 
 	async function handleSaveMigration() {
 		if (!draft.name.trim()) {
-			setError(`${t("migrationNameLabel")}: required`);
+			setError(t("migrationNameRequired"));
 			return;
 		}
 
 		if (!draft.upScript.trim()) {
-			setError(`${t("migrationUpScriptLabel")}: required`);
+			setError(t("migrationUpScriptRequired"));
 			return;
 		}
 
@@ -168,7 +168,7 @@ export function MigrationWorkspace({ connectionId, t }: Props) {
 			await reloadAll();
 			setDraft(toDraft(saved));
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to save migration");
+			setError(err instanceof Error ? err.message : t("failedSaveMigration"));
 		} finally {
 			setIsBusy(false);
 		}
@@ -195,7 +195,7 @@ export function MigrationWorkspace({ connectionId, t }: Props) {
 			setDraft(EMPTY_DRAFT);
 			await reloadAll();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to delete migration");
+			setError(err instanceof Error ? err.message : t("failedDeleteMigration"));
 		} finally {
 			setIsBusy(false);
 		}
@@ -211,7 +211,7 @@ export function MigrationWorkspace({ connectionId, t }: Props) {
 		}
 
 		const confirmDestructive = destructiveWarning
-			? window.confirm(`${t("migrationDestructiveWarning")} Continue?`)
+			? window.confirm(`${t("migrationDestructiveWarning")} ${t("continuePrompt")}`)
 			: false;
 
 		setIsBusy(true);
@@ -220,7 +220,7 @@ export function MigrationWorkspace({ connectionId, t }: Props) {
 			await api.applyMigration(connectionId, draft.id, confirmDestructive);
 			await reloadAll();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to apply migration");
+			setError(err instanceof Error ? err.message : t("failedApplyMigration"));
 		} finally {
 			setIsBusy(false);
 		}
@@ -241,7 +241,7 @@ export function MigrationWorkspace({ connectionId, t }: Props) {
 		}
 
 		const confirmDestructive = destructiveWarning
-			? window.confirm(`${t("migrationDestructiveWarning")} Continue?`)
+			? window.confirm(`${t("migrationDestructiveWarning")} ${t("continuePrompt")}`)
 			: false;
 
 		setIsBusy(true);
@@ -250,7 +250,7 @@ export function MigrationWorkspace({ connectionId, t }: Props) {
 			await api.rollbackMigration(connectionId, draft.id, confirmDestructive);
 			await reloadAll();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to rollback migration");
+			setError(err instanceof Error ? err.message : t("failedRollbackMigration"));
 		} finally {
 			setIsBusy(false);
 		}
@@ -374,7 +374,7 @@ export function MigrationWorkspace({ connectionId, t }: Props) {
 						<button className="primary-button" onClick={handleSaveMigration} disabled={isBusy}>{t("saveMigration")}</button>
 						<button onClick={handleApplyMigration} disabled={isBusy || !draft.id}>{t("applyMigration")}</button>
 						<button onClick={handleRollbackMigration} disabled={isBusy || !draft.id}>{t("rollbackMigration")}</button>
-						<button onClick={handleDeleteMigration} disabled={isBusy || !draft.id}>{t("deleteSavedQuery")}</button>
+						<button onClick={handleDeleteMigration} disabled={isBusy || !draft.id}>{t("deleteMigration")}</button>
 					</div>
 
 					<div className="card panel-card">

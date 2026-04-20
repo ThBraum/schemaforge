@@ -9,6 +9,8 @@ export type TranslationKey =
 	| "appTitle"
 	| "appSubtitle"
 	| "themeLabel"
+	| "darkThemeLabel"
+	| "lightThemeLabel"
 	| "languageLabel"
 	| "connectionsTitle"
 	| "connectionsEmpty"
@@ -19,6 +21,8 @@ export type TranslationKey =
 	| "connectionFormHint"
 	| "nameLabel"
 	| "databaseLabel"
+	| "postgresqlLabel"
+	| "mysqlLabel"
 	| "portLabel"
 	| "hostLabel"
 	| "databaseNameLabel"
@@ -31,6 +35,10 @@ export type TranslationKey =
 	| "connectedTo"
 	| "schemasTitle"
 	| "structureTitle"
+	| "tableColumnHeader"
+	| "tableTypeHeader"
+	| "tableNullableHeader"
+	| "tableDefaultHeader"
 	| "previewTitle"
 	| "queryRunnerTitle"
 	| "runQuery"
@@ -95,6 +103,7 @@ export type TranslationKey =
 	| "applyMigration"
 	| "rollbackMigration"
 	| "deleteMigrationBlocked"
+	| "deleteMigration"
 	| "migrationHistoryTitle"
 	| "migrationSelectPrompt"
 	| "migrationDownScriptWarning"
@@ -112,13 +121,33 @@ export type TranslationKey =
 	| "migrationRunSucceeded"
 	| "migrationRunFailed"
 	| "generateFromDiff"
-	| "migrationSelectSnapshotsPrompt";
+	| "migrationSelectSnapshotsPrompt"
+	| "continuePrompt"
+	| "migrationNameRequired"
+	| "migrationUpScriptRequired"
+	| "failedLoadMigrations"
+	| "failedGenerateMigrationFromDiff"
+	| "failedSaveMigration"
+	| "failedDeleteMigration"
+	| "failedApplyMigration"
+	| "failedRollbackMigration"
+	| "failedLoadSchema"
+	| "failedLoadPreview"
+	| "failedRunQuery"
+	| "failedSaveQuery"
+	| "failedDeleteQuery"
+	| "failedCaptureSnapshot"
+	| "failedLoadSnapshot"
+	| "failedCompareSnapshots"
+	| "failedExportSchemaDiff";
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
 	en: {
 		appTitle: "SchemaForge",
 		appSubtitle: "A modern database explorer for PostgreSQL and MySQL.",
 		themeLabel: "Theme",
+		darkThemeLabel: "Dark",
+		lightThemeLabel: "Light",
 		languageLabel: "Language",
 		connectionsTitle: "Connections",
 		connectionsEmpty: "No saved connections yet.",
@@ -129,6 +158,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		connectionFormHint: "Save credentials locally to connect faster next time.",
 		nameLabel: "Connection name",
 		databaseLabel: "Database engine",
+		postgresqlLabel: "PostgreSQL",
+		mysqlLabel: "MySQL",
 		portLabel: "Port",
 		hostLabel: "Host",
 		databaseNameLabel: "Database",
@@ -141,6 +172,10 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		connectedTo: "Connected to",
 		schemasTitle: "Tables",
 		structureTitle: "Table structure",
+		tableColumnHeader: "Column",
+		tableTypeHeader: "Type",
+		tableNullableHeader: "Nullable",
+		tableDefaultHeader: "Default",
 		previewTitle: "Data preview",
 		queryRunnerTitle: "Query runner",
 		runQuery: "Run query",
@@ -205,6 +240,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		applyMigration: "Apply",
 		rollbackMigration: "Rollback",
 		deleteMigrationBlocked: "Applied migrations cannot be deleted.",
+		deleteMigration: "Delete",
 		migrationHistoryTitle: "Migration execution history",
 		migrationSelectPrompt: "Select a migration to edit scripts and metadata.",
 		migrationDownScriptWarning: "Down script is empty. Rollback will not be available.",
@@ -223,11 +259,31 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		migrationRunFailed: "Failed",
 		generateFromDiff: "Generate from diff",
 		migrationSelectSnapshotsPrompt: "Select source and target snapshots.",
+		continuePrompt: "Continue?",
+		migrationNameRequired: "Migration name is required.",
+		migrationUpScriptRequired: "Up script is required.",
+		failedLoadMigrations: "Failed to load migrations",
+		failedGenerateMigrationFromDiff: "Failed to generate migration from diff",
+		failedSaveMigration: "Failed to save migration",
+		failedDeleteMigration: "Failed to delete migration",
+		failedApplyMigration: "Failed to apply migration",
+		failedRollbackMigration: "Failed to rollback migration",
+		failedLoadSchema: "Failed to load schema",
+		failedLoadPreview: "Failed to load preview",
+		failedRunQuery: "Failed to run query",
+		failedSaveQuery: "Failed to save query",
+		failedDeleteQuery: "Failed to delete query",
+		failedCaptureSnapshot: "Failed to capture snapshot",
+		failedLoadSnapshot: "Failed to load snapshot",
+		failedCompareSnapshots: "Failed to compare snapshots",
+		failedExportSchemaDiff: "Failed to export schema diff",
 	},
 	"pt-BR": {
 		appTitle: "SchemaForge",
 		appSubtitle: "Um explorador moderno de bancos para PostgreSQL e MySQL.",
 		themeLabel: "Tema",
+		darkThemeLabel: "Escuro",
+		lightThemeLabel: "Claro",
 		languageLabel: "Idioma",
 		connectionsTitle: "Conexões",
 		connectionsEmpty: "Ainda não há conexões salvas.",
@@ -238,20 +294,26 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		connectionFormHint: "As credenciais ficam salvas localmente para agilizar o próximo acesso.",
 		nameLabel: "Nome da conexão",
 		databaseLabel: "Motor do banco",
+		postgresqlLabel: "PostgreSQL",
+		mysqlLabel: "MySQL",
 		portLabel: "Porta",
 		hostLabel: "Host",
-		databaseNameLabel: "Database",
+		databaseNameLabel: "Banco de dados",
 		usernameLabel: "Usuário",
 		passwordLabel: "Senha",
 		saveConnection: "Salvar conexão",
 		savingConnection: "Salvando...",
-		explorerTitle: "Explorer",
+		explorerTitle: "Explorador",
 		noConnectionSelected: "Selecione uma conexão para começar.",
 		connectedTo: "Conectado em",
 		schemasTitle: "Tabelas",
 		structureTitle: "Estrutura da tabela",
-		previewTitle: "Preview de dados",
-		queryRunnerTitle: "Query runner",
+		tableColumnHeader: "Coluna",
+		tableTypeHeader: "Tipo",
+		tableNullableHeader: "Nulo",
+		tableDefaultHeader: "Default",
+		previewTitle: "Pré-visualização de dados",
+		queryRunnerTitle: "Executor de consultas",
 		runQuery: "Executar query",
 		queryPlaceholder: "select 1 as status;",
 		selectedTableEmpty: "Nenhuma tabela selecionada.",
@@ -262,25 +324,25 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		nullLabel: "NULL",
 		yes: "Sim",
 		no: "Não",
-		savedQueriesTitle: "Queries salvas",
+		savedQueriesTitle: "Consultas salvas",
 		savedQueriesEmpty: "Nenhuma query salva ainda.",
 		savedQueryTitleLabel: "Título",
 		savedQueryTagsLabel: "Tags (separadas por vírgula)",
-		saveCurrentQuery: "Salvar query atual",
+		saveCurrentQuery: "Salvar consulta atual",
 		editSavedQuery: "Editar",
-		newSavedQuery: "Nova query salva",
+		newSavedQuery: "Nova consulta salva",
 		openSavedQuery: "Abrir",
 		deleteSavedQuery: "Excluir",
-		queryHistoryTitle: "Histórico de queries",
+		queryHistoryTitle: "Histórico de consultas",
 		queryHistoryEmpty: "Ainda não há histórico para esta conexão.",
 		reopenQuery: "Reabrir",
-		snapshotTitle: "Snapshots de schema",
+		snapshotTitle: "Snapshots do schema",
 		captureSnapshot: "Capturar snapshot",
 		snapshotNamePlaceholder: "nome do snapshot (opcional)",
 		snapshotsEmpty: "Nenhum snapshot capturado ainda.",
 		viewSnapshot: "Ver",
 		snapshotDetailsTitle: "Detalhes do snapshot",
-		schemaDiffTitle: "Schema diff",
+		schemaDiffTitle: "Diferença de schema",
 		sourceSnapshotLabel: "Snapshot de origem",
 		targetSnapshotLabel: "Snapshot de destino",
 		compareSnapshots: "Comparar snapshots",
@@ -302,8 +364,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		exportHtml: "Exportar HTML",
 		schemaDiffSelectDifferentSnapshotsError: "Selecione snapshots diferentes para comparar.",
 		schemaDiffSelectSnapshotsForExportError: "Selecione snapshots de origem e destino antes de exportar.",
-		migrationWorkspaceTitle: "Workspace de migrações",
-		migrationWorkspaceHint: "Crie, revise, aplique e faça rollback de migrações com segurança.",
+		migrationWorkspaceTitle: "Área de migrações",
+		migrationWorkspaceHint: "Crie, revise, aplique e reverta migrações com segurança.",
 		migrationsEmpty: "Nenhuma migração para esta conexão ainda.",
 		migrationNameLabel: "Nome da migração",
 		migrationDescriptionLabel: "Descrição (opcional)",
@@ -314,6 +376,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		applyMigration: "Aplicar",
 		rollbackMigration: "Rollback",
 		deleteMigrationBlocked: "Migrações aplicadas não podem ser excluídas.",
+		deleteMigration: "Excluir",
 		migrationHistoryTitle: "Histórico de execução de migrações",
 		migrationSelectPrompt: "Selecione uma migração para editar scripts e metadados.",
 		migrationDownScriptWarning: "Script de down vazio. Rollback não ficará disponível.",
@@ -332,6 +395,24 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		migrationRunFailed: "Falha",
 		generateFromDiff: "Gerar do diff",
 		migrationSelectSnapshotsPrompt: "Selecione snapshots de origem e destino.",
+		continuePrompt: "Continuar?",
+		migrationNameRequired: "O nome da migração é obrigatório.",
+		migrationUpScriptRequired: "O script de up é obrigatório.",
+		failedLoadMigrations: "Falha ao carregar migrações",
+		failedGenerateMigrationFromDiff: "Falha ao gerar migração a partir do diff",
+		failedSaveMigration: "Falha ao salvar migração",
+		failedDeleteMigration: "Falha ao excluir migração",
+		failedApplyMigration: "Falha ao aplicar migração",
+		failedRollbackMigration: "Falha ao reverter migração",
+		failedLoadSchema: "Falha ao carregar schema",
+		failedLoadPreview: "Falha ao carregar pré-visualização",
+		failedRunQuery: "Falha ao executar consulta",
+		failedSaveQuery: "Falha ao salvar consulta",
+		failedDeleteQuery: "Falha ao excluir consulta",
+		failedCaptureSnapshot: "Falha ao capturar snapshot",
+		failedLoadSnapshot: "Falha ao carregar snapshot",
+		failedCompareSnapshots: "Falha ao comparar snapshots",
+		failedExportSchemaDiff: "Falha ao exportar diferença de schema",
 	},
 };
 

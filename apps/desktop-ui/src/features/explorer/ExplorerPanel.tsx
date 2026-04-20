@@ -41,6 +41,10 @@ export function ExplorerPanel({ connection, t }: Props) {
   const [isComparingSnapshots, setIsComparingSnapshots] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function formatDatabaseTypeLabel(databaseType: SavedConnection['databaseType']) {
+    return databaseType === 'postgres' ? t('postgresqlLabel') : t('mysqlLabel');
+  }
+
   useEffect(() => {
     async function loadInitialState() {
       if (!connection) {
@@ -83,7 +87,7 @@ export function ExplorerPanel({ connection, t }: Props) {
         const firstTable = schemaResult.schemas.flatMap((item) => item.tables)[0] ?? null;
         setSelectedTable(firstTable);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Falha ao carregar schema');
+        setError(err instanceof Error ? err.message : t('failedLoadSchema'));
       }
     }
 
@@ -101,7 +105,7 @@ export function ExplorerPanel({ connection, t }: Props) {
         const result = await api.previewTable(connection.id, selectedTable.schemaName, selectedTable.tableName);
         setPreview(result);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Falha ao carregar preview');
+        setError(err instanceof Error ? err.message : t('failedLoadPreview'));
       }
     }
 
@@ -117,7 +121,7 @@ export function ExplorerPanel({ connection, t }: Props) {
       const history = await api.listQueryHistory(connection.id, 50);
       setQueryHistory(history);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao executar query');
+      setError(err instanceof Error ? err.message : t('failedRunQuery'));
     }
   }
 
@@ -145,7 +149,7 @@ export function ExplorerPanel({ connection, t }: Props) {
       setSavedQueryTitle('');
       setSavedQueryTags('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao salvar query');
+      setError(err instanceof Error ? err.message : t('failedSaveQuery'));
     }
   }
 
@@ -164,7 +168,7 @@ export function ExplorerPanel({ connection, t }: Props) {
         setSavedQueryTags('');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao excluir query');
+      setError(err instanceof Error ? err.message : t('failedDeleteQuery'));
     }
   }
 
@@ -198,7 +202,7 @@ export function ExplorerPanel({ connection, t }: Props) {
       setSelectedSnapshot(snapshotDetails);
       setSnapshotName('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao capturar snapshot');
+      setError(err instanceof Error ? err.message : t('failedCaptureSnapshot'));
     } finally {
       setIsCapturingSnapshot(false);
     }
@@ -210,7 +214,7 @@ export function ExplorerPanel({ connection, t }: Props) {
       const snapshot = await api.getSnapshot(snapshotId);
       setSelectedSnapshot(snapshot);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao carregar snapshot');
+      setError(err instanceof Error ? err.message : t('failedLoadSnapshot'));
     }
   }
 
@@ -226,7 +230,7 @@ export function ExplorerPanel({ connection, t }: Props) {
       const diff = await api.compareSnapshots(sourceSnapshotId, targetSnapshotId);
       setSchemaDiff(diff);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao comparar snapshots');
+      setError(err instanceof Error ? err.message : t('failedCompareSnapshots'));
     } finally {
       setIsComparingSnapshots(false);
     }
@@ -256,7 +260,7 @@ export function ExplorerPanel({ connection, t }: Props) {
         window.URL.revokeObjectURL(url);
       }, 0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao exportar schema diff');
+      setError(err instanceof Error ? err.message : t('failedExportSchemaDiff'));
     }
   }
 
@@ -276,7 +280,7 @@ export function ExplorerPanel({ connection, t }: Props) {
         <div className="hero-copy">
           <p className="eyebrow">{t('explorerTitle')}</p>
           <h2>{connection.name}</h2>
-          <p className="small">{t('connectedTo')} <strong>{connection.databaseType}</strong> · {connection.host}:{connection.port}</p>
+          <p className="small">{t('connectedTo')} <strong>{formatDatabaseTypeLabel(connection.databaseType)}</strong> · {connection.host}:{connection.port}</p>
         </div>
         <div className="hero-badges">
           <span className="badge">{connection.database}</span>
@@ -326,10 +330,10 @@ export function ExplorerPanel({ connection, t }: Props) {
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Coluna</th>
-                      <th>Tipo</th>
-                      <th>Nulo</th>
-                      <th>Default</th>
+                      <th>{t('tableColumnHeader')}</th>
+                      <th>{t('tableTypeHeader')}</th>
+                      <th>{t('tableNullableHeader')}</th>
+                      <th>{t('tableDefaultHeader')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -356,18 +360,20 @@ export function ExplorerPanel({ connection, t }: Props) {
               {preview ? <p className="small">{preview.rows.length} {t('rowsLabel')}</p> : null}
             </div>
             {!preview ? <p>{t('previewEmpty')}</p> : (
-              <table className="table">
-                <thead>
-                  <tr>{preview.columns.map((column) => <th key={column}>{column}</th>)}</tr>
-                </thead>
-                <tbody>
-                  {preview.rows.map((row, index) => (
-                    <tr key={index}>
-                      {preview.columns.map((column) => <td key={column}>{String(row[column] ?? '')}</td>)}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="table-scroll" role="region" aria-label={t('previewTitle')}>
+                <table className="table">
+                  <thead>
+                    <tr>{preview.columns.map((column) => <th key={column}>{column}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {preview.rows.map((row, index) => (
+                      <tr key={index}>
+                        {preview.columns.map((column) => <td key={column}>{String(row[column] ?? '')}</td>)}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
 
