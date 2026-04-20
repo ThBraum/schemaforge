@@ -13,6 +13,8 @@ export type TranslationKey =
 	| "connectionsTitle"
 	| "connectionsEmpty"
 	| "connectionsEmptyHint"
+	| "deleteConnection"
+	| "deleteConnectionConfirm"
 	| "newConnectionTitle"
 	| "connectionFormHint"
 	| "nameLabel"
@@ -80,7 +82,37 @@ export type TranslationKey =
 	| "exportJson"
 	| "exportHtml"
 	| "schemaDiffSelectDifferentSnapshotsError"
-	| "schemaDiffSelectSnapshotsForExportError";
+	| "schemaDiffSelectSnapshotsForExportError"
+	| "migrationWorkspaceTitle"
+	| "migrationWorkspaceHint"
+	| "migrationsEmpty"
+	| "migrationNameLabel"
+	| "migrationDescriptionLabel"
+	| "migrationUpScriptLabel"
+	| "migrationDownScriptLabel"
+	| "saveMigration"
+	| "newMigration"
+	| "applyMigration"
+	| "rollbackMigration"
+	| "deleteMigrationBlocked"
+	| "migrationHistoryTitle"
+	| "migrationSelectPrompt"
+	| "migrationDownScriptWarning"
+	| "migrationDestructiveWarning"
+	| "migrationConfirmApply"
+	| "migrationConfirmRollback"
+	| "migrationDeleteConfirm"
+	| "migrationStatusDraft"
+	| "migrationStatusPending"
+	| "migrationStatusApplied"
+	| "migrationStatusFailed"
+	| "migrationStatusRolledBack"
+	| "migrationDirectionUp"
+	| "migrationDirectionDown"
+	| "migrationRunSucceeded"
+	| "migrationRunFailed"
+	| "generateFromDiff"
+	| "migrationSelectSnapshotsPrompt";
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
 	en: {
@@ -91,6 +123,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		connectionsTitle: "Connections",
 		connectionsEmpty: "No saved connections yet.",
 		connectionsEmptyHint: "Create one on the left to start exploring your database.",
+		deleteConnection: "Delete",
+		deleteConnectionConfirm: "Delete this saved connection?",
 		newConnectionTitle: "New connection",
 		connectionFormHint: "Save credentials locally to connect faster next time.",
 		nameLabel: "Connection name",
@@ -159,6 +193,36 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		exportHtml: "Export HTML",
 		schemaDiffSelectDifferentSnapshotsError: "Select different snapshots to compare.",
 		schemaDiffSelectSnapshotsForExportError: "Select source and target snapshots before exporting.",
+		migrationWorkspaceTitle: "Migration workspace",
+		migrationWorkspaceHint: "Create, review, apply and rollback schema migrations safely.",
+		migrationsEmpty: "No migrations for this connection yet.",
+		migrationNameLabel: "Migration name",
+		migrationDescriptionLabel: "Description (optional)",
+		migrationUpScriptLabel: "Up script",
+		migrationDownScriptLabel: "Down script",
+		saveMigration: "Save migration",
+		newMigration: "New migration",
+		applyMigration: "Apply",
+		rollbackMigration: "Rollback",
+		deleteMigrationBlocked: "Applied migrations cannot be deleted.",
+		migrationHistoryTitle: "Migration execution history",
+		migrationSelectPrompt: "Select a migration to edit scripts and metadata.",
+		migrationDownScriptWarning: "Down script is empty. Rollback will not be available.",
+		migrationDestructiveWarning: "Potentially destructive SQL detected.",
+		migrationConfirmApply: "Apply this migration now?",
+		migrationConfirmRollback: "Rollback this migration now?",
+		migrationDeleteConfirm: "Delete this migration?",
+		migrationStatusDraft: "Draft",
+		migrationStatusPending: "Pending",
+		migrationStatusApplied: "Applied",
+		migrationStatusFailed: "Failed",
+		migrationStatusRolledBack: "Rolled back",
+		migrationDirectionUp: "Up",
+		migrationDirectionDown: "Down",
+		migrationRunSucceeded: "Succeeded",
+		migrationRunFailed: "Failed",
+		generateFromDiff: "Generate from diff",
+		migrationSelectSnapshotsPrompt: "Select source and target snapshots.",
 	},
 	"pt-BR": {
 		appTitle: "SchemaForge",
@@ -168,6 +232,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		connectionsTitle: "Conexões",
 		connectionsEmpty: "Ainda não há conexões salvas.",
 		connectionsEmptyHint: "Crie uma conexão ao lado para começar a explorar o banco.",
+		deleteConnection: "Excluir",
+		deleteConnectionConfirm: "Excluir esta conexão salva?",
 		newConnectionTitle: "Nova conexão",
 		connectionFormHint: "As credenciais ficam salvas localmente para agilizar o próximo acesso.",
 		nameLabel: "Nome da conexão",
@@ -236,6 +302,36 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		exportHtml: "Exportar HTML",
 		schemaDiffSelectDifferentSnapshotsError: "Selecione snapshots diferentes para comparar.",
 		schemaDiffSelectSnapshotsForExportError: "Selecione snapshots de origem e destino antes de exportar.",
+		migrationWorkspaceTitle: "Workspace de migrações",
+		migrationWorkspaceHint: "Crie, revise, aplique e faça rollback de migrações com segurança.",
+		migrationsEmpty: "Nenhuma migração para esta conexão ainda.",
+		migrationNameLabel: "Nome da migração",
+		migrationDescriptionLabel: "Descrição (opcional)",
+		migrationUpScriptLabel: "Script de up",
+		migrationDownScriptLabel: "Script de down",
+		saveMigration: "Salvar migração",
+		newMigration: "Nova migração",
+		applyMigration: "Aplicar",
+		rollbackMigration: "Rollback",
+		deleteMigrationBlocked: "Migrações aplicadas não podem ser excluídas.",
+		migrationHistoryTitle: "Histórico de execução de migrações",
+		migrationSelectPrompt: "Selecione uma migração para editar scripts e metadados.",
+		migrationDownScriptWarning: "Script de down vazio. Rollback não ficará disponível.",
+		migrationDestructiveWarning: "SQL potencialmente destrutivo detectado.",
+		migrationConfirmApply: "Aplicar esta migração agora?",
+		migrationConfirmRollback: "Executar rollback desta migração agora?",
+		migrationDeleteConfirm: "Excluir esta migração?",
+		migrationStatusDraft: "Rascunho",
+		migrationStatusPending: "Pendente",
+		migrationStatusApplied: "Aplicada",
+		migrationStatusFailed: "Falhou",
+		migrationStatusRolledBack: "Revertida",
+		migrationDirectionUp: "Up",
+		migrationDirectionDown: "Down",
+		migrationRunSucceeded: "Sucesso",
+		migrationRunFailed: "Falha",
+		generateFromDiff: "Gerar do diff",
+		migrationSelectSnapshotsPrompt: "Selecione snapshots de origem e destino.",
 	},
 };
 

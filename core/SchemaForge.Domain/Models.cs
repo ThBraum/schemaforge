@@ -62,6 +62,13 @@ public sealed class QueryResult
     public required long DurationMs { get; init; }
 }
 
+public sealed class ScriptExecutionResult
+{
+    public required long DurationMs { get; init; }
+    public required int AffectedRows { get; init; }
+    public string? OutputLog { get; init; }
+}
+
 public sealed class SavedQuery
 {
     public required Guid Id { get; init; }
@@ -88,6 +95,56 @@ public sealed class QueryHistoryEntry
     public required long DurationMs { get; init; }
     public string? ErrorMessage { get; init; }
     public required DateTimeOffset ExecutedAtUtc { get; init; }
+}
+
+public enum MigrationStatus
+{
+    Draft = 1,
+    Pending = 2,
+    Applied = 3,
+    Failed = 4,
+    RolledBack = 5,
+}
+
+public enum MigrationDirection
+{
+    Up = 1,
+    Down = 2,
+}
+
+public enum MigrationExecutionStatus
+{
+    Succeeded = 1,
+    Failed = 2,
+}
+
+public sealed class MigrationDefinition
+{
+    public required Guid Id { get; init; }
+    public required Guid ConnectionId { get; init; }
+    public required string Name { get; init; }
+    public string? Description { get; init; }
+    public required string UpScript { get; init; }
+    public required string DownScript { get; init; }
+    public string? Checksum { get; init; }
+    public Guid? SourceSnapshotId { get; init; }
+    public Guid? TargetSnapshotId { get; init; }
+    public required MigrationStatus Status { get; init; }
+    public required DateTimeOffset CreatedAtUtc { get; init; }
+    public required DateTimeOffset UpdatedAtUtc { get; init; }
+}
+
+public sealed class MigrationExecutionRun
+{
+    public required Guid MigrationRunId { get; init; }
+    public required Guid MigrationId { get; init; }
+    public required Guid ConnectionId { get; init; }
+    public required DateTimeOffset ExecutedAtUtc { get; init; }
+    public required MigrationDirection Direction { get; init; }
+    public required MigrationExecutionStatus Status { get; init; }
+    public required long DurationMs { get; init; }
+    public string? ExecutionLog { get; init; }
+    public string? ErrorMessage { get; init; }
 }
 
 public sealed class SchemaSnapshot

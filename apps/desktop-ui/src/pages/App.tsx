@@ -74,6 +74,16 @@ export function App() {
     await loadConnections(connection.id);
   }
 
+  async function handleDeleteConnection(connectionId: string) {
+    if (!window.confirm(t.deleteConnectionConfirm)) {
+      return;
+    }
+
+    await api.deleteConnection(connectionId);
+    const nextSelectedId = selectedConnectionId === connectionId ? null : selectedConnectionId;
+    await loadConnections(nextSelectedId);
+  }
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -162,15 +172,25 @@ export function App() {
                   <p className="small">{t.connectionsEmptyHint}</p>
                 </div>
               ) : connections.map((connection) => (
-                <button
-                  key={connection.id}
-                  className={`connection-item ${selectedConnectionId === connection.id ? 'active' : ''}`}
-                  type="button"
-                  onClick={() => setSelectedConnectionId(connection.id)}
-                >
-                  <span className="connection-name">{connection.name}</span>
-                  <span className="small">{connection.databaseType} · {connection.host}:{connection.port}</span>
-                </button>
+                <div key={connection.id} className={`connection-item ${selectedConnectionId === connection.id ? 'active' : ''}`}>
+                  <button
+                    className="connection-main"
+                    type="button"
+                    onClick={() => setSelectedConnectionId(connection.id)}
+                  >
+                    <span className="connection-name">{connection.name}</span>
+                    <span className="small">{connection.databaseType} · {connection.host}:{connection.port}</span>
+                  </button>
+                  <button
+                    className="danger-ghost"
+                    type="button"
+                    onClick={() => handleDeleteConnection(connection.id)}
+                    aria-label={t.deleteConnection}
+                    title={t.deleteConnection}
+                  >
+                    {t.deleteConnection}
+                  </button>
+                </div>
               ))}
             </div>
           </section>

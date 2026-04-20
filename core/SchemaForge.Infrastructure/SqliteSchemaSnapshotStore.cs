@@ -39,7 +39,11 @@ on conflict(id) do update set
         await EnsureSchemaAsync(connection);
 
         var row = await connection.QuerySingleOrDefaultAsync<SchemaSnapshotRow>(@"
-select id, connection_id as ConnectionId, snapshot_name as Name, structure_json as StructureJson, created_at_utc as CreatedAtUtc
+    select id as Id,
+           connection_id as ConnectionId,
+           snapshot_name as Name,
+           structure_json as StructureJson,
+           created_at_utc as CreatedAtUtc
 from app_schema_snapshots
 where id = @Id;", new { Id = id.ToString() });
 
@@ -53,7 +57,11 @@ where id = @Id;", new { Id = id.ToString() });
         await EnsureSchemaAsync(connection);
 
         var rows = await connection.QueryAsync<SchemaSnapshotRow>(@"
-select id, connection_id as ConnectionId, snapshot_name as Name, structure_json as StructureJson, created_at_utc as CreatedAtUtc
+    select id as Id,
+           connection_id as ConnectionId,
+           snapshot_name as Name,
+           structure_json as StructureJson,
+           created_at_utc as CreatedAtUtc
 from app_schema_snapshots
 where connection_id = @ConnectionId
 order by created_at_utc desc;", new { ConnectionId = connectionId.ToString() });
@@ -71,9 +79,20 @@ order by created_at_utc desc;", new { ConnectionId = connectionId.ToString() });
             Id = Guid.Parse(row.Id),
             ConnectionId = Guid.Parse(row.ConnectionId),
             Name = row.Name,
-            CreatedAtUtc = DateTime.SpecifyKind(row.CreatedAtUtc, DateTimeKind.Utc),
+            CreatedAtUtc = ParseUtc(row.CreatedAtUtc),
             Structure = structure,
         };
+    }
+
+    private static DateTimeOffset ParseUtc(string value)
+    {
+        return DateTimeOffset.TryParse(
+            value,
+            null,
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+            out var parsed)
+            ? parsed
+            : throw new InvalidOperationException($"Invalid UTC timestamp '{value}'.");
     }
 
     private static async Task EnsureSchemaAsync(Microsoft.Data.Sqlite.SqliteConnection connection)
@@ -96,10 +115,12 @@ create index if not exists idx_app_schema_snapshots_created_at on app_schema_sna
         await connection.ExecuteAsync(sql);
     }
 
-    private sealed record SchemaSnapshotRow(
-        string Id,
-        string ConnectionId,
-        string? Name,
-        string StructureJson,
-        DateTime CreatedAtUtc);
+    private sealed class SchemaSnapshotRow
+    {
+        public string Id { get; init; } = string.Empty;
+        public string ConnectionId { get; init; } = string.Empty;
+        public string? Name { get; init; }
+        public string StructureJson { get; init; } = string.Empty;
+        public string CreatedAtUtc { get; init; } = string.Empty;
+    }
 }

@@ -349,6 +349,21 @@ textarea:focus-visible {
   background: var(--bg-soft);
 }
 
+.connection-item {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.connection-main {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
 .connection-item:hover,
 .table-item:hover {
   transform: translateY(-1px);
@@ -362,6 +377,18 @@ textarea:focus-visible {
 
 .connection-name {
   font-weight: 700;
+}
+
+.danger-ghost {
+  color: #ff8b8b;
+  border-color: color-mix(in srgb, #ff6b6b 40%, var(--border));
+  background: color-mix(in srgb, #ff6b6b 8%, transparent);
+  padding: 6px 10px;
+}
+
+.danger-ghost:hover {
+  border-color: color-mix(in srgb, #ff6b6b 70%, var(--border));
+  background: color-mix(in srgb, #ff6b6b 14%, transparent);
 }
 
 .grid-2 {
@@ -436,6 +463,35 @@ textarea:focus-visible {
   transform: translateY(-1px);
 }
 
+.migration-workspace {
+  gap: 18px;
+}
+
+.migration-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.migration-list,
+.migration-editor {
+  min-width: 0;
+}
+
+.migration-script {
+  min-height: 140px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.9rem;
+}
+
+.warning-text {
+  color: #f59e0b;
+}
+
+.migration-counters {
+  justify-content: flex-end;
+}
+
 textarea {
   min-height: 150px;
   width: 100%;
@@ -460,6 +516,10 @@ pre {
   }
 
   .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .migration-layout {
     grid-template-columns: 1fr;
   }
 }

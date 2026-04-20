@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import type { TranslationKey } from '../../i18n';
+import { MigrationWorkspace } from '../migrations/MigrationWorkspace';
 import type {
   QueryHistoryItem,
   QueryResult,
@@ -688,6 +689,8 @@ export function ExplorerPanel({ connection, t }: Props) {
           </div>
         </div>
       </div>
+
+      <MigrationWorkspace connectionId={connection.id} t={t} />
     </div>
   );
 }

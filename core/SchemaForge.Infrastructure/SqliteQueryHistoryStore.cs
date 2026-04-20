@@ -35,7 +35,13 @@ values(@Id, @ConnectionId, @Sql, @Status, @DurationMs, @ErrorMessage, @ExecutedA
         await EnsureSchemaAsync(connection);
 
         var rows = await connection.QueryAsync<QueryHistoryRow>(@"
-select id, connection_id as ConnectionId, sql_text as Sql, status, duration_ms as DurationMs, error_message as ErrorMessage, executed_at_utc as ExecutedAtUtc
+    select id as Id,
+           connection_id as ConnectionId,
+           sql_text as Sql,
+           status as Status,
+           duration_ms as DurationMs,
+           error_message as ErrorMessage,
+           executed_at_utc as ExecutedAtUtc
 from app_query_history
 where connection_id = @ConnectionId
 order by executed_at_utc desc
@@ -65,8 +71,19 @@ limit @Limit;", new
             Status = status,
             DurationMs = row.DurationMs,
             ErrorMessage = row.ErrorMessage,
-            ExecutedAtUtc = DateTime.SpecifyKind(row.ExecutedAtUtc, DateTimeKind.Utc),
+            ExecutedAtUtc = ParseUtc(row.ExecutedAtUtc),
         };
+    }
+
+    private static DateTimeOffset ParseUtc(string value)
+    {
+        return DateTimeOffset.TryParse(
+            value,
+            null,
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+            out var parsed)
+            ? parsed
+            : throw new InvalidOperationException($"Invalid UTC timestamp '{value}'.");
     }
 
     private static async Task EnsureSchemaAsync(Microsoft.Data.Sqlite.SqliteConnection connection)
@@ -91,12 +108,14 @@ create index if not exists idx_app_query_history_executed_at on app_query_histor
         await connection.ExecuteAsync(sql);
     }
 
-    private sealed record QueryHistoryRow(
-        string Id,
-        string ConnectionId,
-        string Sql,
-        string Status,
-        long DurationMs,
-        string? ErrorMessage,
-        DateTime ExecutedAtUtc);
+    private sealed class QueryHistoryRow
+    {
+        public string Id { get; init; } = string.Empty;
+        public string ConnectionId { get; init; } = string.Empty;
+        public string Sql { get; init; } = string.Empty;
+        public string Status { get; init; } = string.Empty;
+        public long DurationMs { get; init; }
+        public string? ErrorMessage { get; init; }
+        public string ExecutedAtUtc { get; init; } = string.Empty;
+    }
 }

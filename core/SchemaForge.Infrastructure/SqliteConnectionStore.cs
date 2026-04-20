@@ -13,7 +13,17 @@ public sealed class SqliteConnectionStore(string dbPath) : IConnectionStore
         await connection.OpenAsync(cancellationToken);
         await EnsureSchemaAsync(connection);
 
-        var rows = await connection.QueryAsync<ConnectionRow>("select * from app_connections order by name asc");
+        var rows = await connection.QueryAsync<ConnectionRow>(@"
+select id as Id,
+       name as Name,
+       database_type as DatabaseType,
+       host as Host,
+       port as Port,
+       database_name as DatabaseName,
+       username as Username,
+       password as Password
+from app_connections
+order by name asc;");
         return rows.Select(Map).ToArray();
     }
 
@@ -23,7 +33,17 @@ public sealed class SqliteConnectionStore(string dbPath) : IConnectionStore
         await connection.OpenAsync(cancellationToken);
         await EnsureSchemaAsync(connection);
 
-        var row = await connection.QuerySingleOrDefaultAsync<ConnectionRow>("select * from app_connections where id = @Id", new { Id = id.ToString() });
+        var row = await connection.QuerySingleOrDefaultAsync<ConnectionRow>(@"
+    select id as Id,
+           name as Name,
+           database_type as DatabaseType,
+           host as Host,
+           port as Port,
+           database_name as DatabaseName,
+           username as Username,
+           password as Password
+    from app_connections
+    where id = @Id;", new { Id = id.ToString() });
         return row is null ? null : Map(row);
     }
 
@@ -58,6 +78,17 @@ on conflict(id) do update set
         });
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        await using var connection = ConnectionStringFactory.CreateLocalStorage(dbPath);
+        await connection.OpenAsync(cancellationToken);
+        await EnsureSchemaAsync(connection);
+
+        await connection.ExecuteAsync(@"
+delete from app_connections
+where id = @Id;", new { Id = id.ToString() });
+    }
+
     private static SavedConnection Map(ConnectionRow row)
     {
         return new SavedConnection
@@ -71,7 +102,7 @@ on conflict(id) do update set
                 _ => throw new InvalidOperationException("Unsupported database type in storage."),
             },
             Host = row.Host,
-            Port = row.Port,
+            Port = checked((int)row.Port),
             Database = row.DatabaseName,
             Username = row.Username,
             Password = row.Password,
@@ -83,13 +114,15 @@ on conflict(id) do update set
         await SqliteLocalSchema.EnsureConnectionsTableAsync(connection);
     }
 
-    private sealed record ConnectionRow(
-        string Id,
-        string Name,
-        string DatabaseType,
-        string Host,
-        int Port,
-        string DatabaseName,
-        string Username,
-        string? Password);
+    private sealed class ConnectionRow
+    {
+        public required string Id { get; init; }
+        public required string Name { get; init; }
+        public required string DatabaseType { get; init; }
+        public required string Host { get; init; }
+        public required long Port { get; init; }
+        public required string DatabaseName { get; init; }
+        public required string Username { get; init; }
+        public string? Password { get; init; }
+    }
 }

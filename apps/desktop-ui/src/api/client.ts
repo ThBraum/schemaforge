@@ -1,4 +1,6 @@
 import type {
+	MigrationExecutionRun,
+	MigrationItem,
 	QueryHistoryItem,
 	QueryResult,
 	SavedConnection,
@@ -34,6 +36,7 @@ export const api = {
 	listConnections: () => request<SavedConnection[]>("/connections"),
 	saveConnection: (payload: SavedConnection) =>
 		request<SavedConnection>("/connections", { method: "POST", body: JSON.stringify(payload) }),
+	deleteConnection: (id: string) => request<void>(`/connections/${id}`, { method: "DELETE" }),
 	getSchema: (connectionId: string) => request<SchemaSummary>(`/explorer/schema/${connectionId}`),
 	previewTable: (connectionId: string, schemaName: string, tableName: string, limit = 100) =>
 		request<TablePreview>(
@@ -104,4 +107,60 @@ export const api = {
 
 		return response.blob();
 	},
+	listMigrations: (connectionId: string) =>
+		request<MigrationItem[]>(`/migrations/${connectionId}`),
+	getMigration: (migrationId: string) =>
+		request<MigrationItem>(`/migrations/item/${migrationId}`),
+	saveMigration: (payload: {
+		id?: string;
+		connectionId: string;
+		name: string;
+		description?: string;
+		upScript: string;
+		downScript: string;
+		status?: string;
+		sourceSnapshotId?: string;
+		targetSnapshotId?: string;
+	}) =>
+		request<MigrationItem>("/migrations", { method: "POST", body: JSON.stringify(payload) }),
+	updateMigration: (
+		id: string,
+		payload: {
+			connectionId: string;
+			name: string;
+			description?: string;
+			upScript: string;
+			downScript: string;
+			status?: string;
+			sourceSnapshotId?: string;
+			targetSnapshotId?: string;
+		},
+	) =>
+		request<MigrationItem>(`/migrations/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+	deleteMigration: (id: string) => request<void>(`/migrations/${id}`, { method: "DELETE" }),
+	generateMigrationFromDiff: (payload: {
+		connectionId: string;
+		sourceSnapshotId: string;
+		targetSnapshotId: string;
+		name?: string;
+		description?: string;
+	}) =>
+		request<MigrationItem>("/migrations/generate-from-diff", {
+			method: "POST",
+			body: JSON.stringify(payload),
+		}),
+	applyMigration: (connectionId: string, migrationId: string, confirmDestructive: boolean) =>
+		request<MigrationExecutionRun>(`/migrations/${connectionId}/${migrationId}/apply`, {
+			method: "POST",
+			body: JSON.stringify({ confirmDestructive }),
+		}),
+	rollbackMigration: (connectionId: string, migrationId: string, confirmDestructive: boolean) =>
+		request<MigrationExecutionRun>(`/migrations/${connectionId}/${migrationId}/rollback`, {
+			method: "POST",
+			body: JSON.stringify({ confirmDestructive }),
+		}),
+	listMigrationHistoryByConnection: (connectionId: string, limit = 200) =>
+		request<MigrationExecutionRun[]>(`/migrations/${connectionId}/history?limit=${limit}`),
+	listMigrationHistoryByMigration: (migrationId: string, limit = 200) =>
+		request<MigrationExecutionRun[]>(`/migrations/history/${migrationId}?limit=${limit}`),
 };
