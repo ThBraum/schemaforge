@@ -78,7 +78,9 @@ export type TranslationKey =
 	| "beforeLabel"
 	| "afterLabel"
 	| "exportJson"
-	| "exportHtml";
+	| "exportHtml"
+	| "schemaDiffSelectDifferentSnapshotsError"
+	| "schemaDiffSelectSnapshotsForExportError";
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
 	en: {
@@ -155,6 +157,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		afterLabel: "After",
 		exportJson: "Export JSON",
 		exportHtml: "Export HTML",
+		schemaDiffSelectDifferentSnapshotsError: "Select different snapshots to compare.",
+		schemaDiffSelectSnapshotsForExportError: "Select source and target snapshots before exporting.",
 	},
 	"pt-BR": {
 		appTitle: "SchemaForge",
@@ -230,6 +234,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 		afterLabel: "Depois",
 		exportJson: "Exportar JSON",
 		exportHtml: "Exportar HTML",
+		schemaDiffSelectDifferentSnapshotsError: "Selecione snapshots diferentes para comparar.",
+		schemaDiffSelectSnapshotsForExportError: "Selecione snapshots de origem e destino antes de exportar.",
 	},
 };
 

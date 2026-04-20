@@ -260,7 +260,7 @@ app.MapGet("/api/schema-diff/details", async (Guid sourceSnapshotId, Guid target
 app.MapGet("/api/schema-diff/export/json", async (Guid sourceSnapshotId, Guid targetSnapshotId, SchemaDiffService service, CancellationToken ct) =>
 {
         var diff = await service.CompareAsync(sourceSnapshotId, targetSnapshotId, ct);
-        var json = JsonSerializer.Serialize(diff, new JsonSerializerOptions
+        var json = JsonSerializer.Serialize(diff, new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
                 WriteIndented = true,
         });

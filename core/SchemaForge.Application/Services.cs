@@ -253,9 +253,23 @@ public sealed class SchemaDiffEngine : ISchemaDiffEngine
         var sourceKeys = sourceTables.Keys.ToHashSet(TableKeyComparer.Instance);
         var targetKeys = targetTables.Keys.ToHashSet(TableKeyComparer.Instance);
 
-        var addedKeys = targetKeys.Except(sourceKeys, TableKeyComparer.Instance).OrderBy(ToSortableTableKey).ToArray();
-        var removedKeys = sourceKeys.Except(targetKeys, TableKeyComparer.Instance).OrderBy(ToSortableTableKey).ToArray();
-        var commonKeys = sourceKeys.Intersect(targetKeys, TableKeyComparer.Instance).OrderBy(ToSortableTableKey).ToArray();
+        var addedKeys = targetKeys
+            .Except(sourceKeys, TableKeyComparer.Instance)
+            .OrderBy(key => key.SchemaName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(key => key.TableName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var removedKeys = sourceKeys
+            .Except(targetKeys, TableKeyComparer.Instance)
+            .OrderBy(key => key.SchemaName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(key => key.TableName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var commonKeys = sourceKeys
+            .Intersect(targetKeys, TableKeyComparer.Instance)
+            .OrderBy(key => key.SchemaName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(key => key.TableName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
         var tablesAdded = addedKeys.Select(ToTableEntry).ToArray();
         var tablesRemoved = removedKeys.Select(ToTableEntry).ToArray();
@@ -526,11 +540,6 @@ public sealed class SchemaDiffEngine : ISchemaDiffEngine
                 table => new TableKey(table.SchemaName, table.TableName),
                 table => table,
                 TableKeyComparer.Instance);
-    }
-
-    private static string ToSortableTableKey(TableKey key)
-    {
-        return $"{key.SchemaName}.{key.TableName}";
     }
 
     private static TableDiffEntry ToTableEntry(TableKey key)

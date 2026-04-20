@@ -215,7 +215,7 @@ export function ExplorerPanel({ connection, t }: Props) {
 
   async function handleCompareSnapshots() {
     if (!sourceSnapshotId || !targetSnapshotId || sourceSnapshotId === targetSnapshotId) {
-      setError('Selecione snapshots diferentes para comparar.');
+      setError(t('schemaDiffSelectDifferentSnapshotsError'));
       return;
     }
 
@@ -233,7 +233,7 @@ export function ExplorerPanel({ connection, t }: Props) {
 
   async function handleExportSchemaDiff(format: 'json' | 'html') {
     if (!sourceSnapshotId || !targetSnapshotId) {
-      setError('Selecione snapshots para exportar.');
+      setError(t('schemaDiffSelectSnapshotsForExportError'));
       return;
     }
 
@@ -248,8 +248,12 @@ export function ExplorerPanel({ connection, t }: Props) {
       const anchor = document.createElement('a');
       anchor.href = url;
       anchor.download = fileName;
+      document.body.appendChild(anchor);
       anchor.click();
-      window.URL.revokeObjectURL(url);
+      document.body.removeChild(anchor);
+      window.setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao exportar schema diff');
     }
@@ -671,8 +675,8 @@ export function ExplorerPanel({ connection, t }: Props) {
                 <details className="snapshot-details">
                   <summary>{t('breakingChangesLabel')} ({schemaDiff.breakingChanges.length})</summary>
                   <div className="list">
-                    {schemaDiff.breakingChanges.length === 0 ? <p className="small">-</p> : schemaDiff.breakingChanges.map((item, index) => (
-                      <div key={`breaking-${index}`} className="list-item-card compact breaking-change">
+                    {schemaDiff.breakingChanges.length === 0 ? <p className="small">-</p> : schemaDiff.breakingChanges.map((item) => (
+                      <div key={`breaking-${item.category}-${item.schemaName}-${item.tableName}-${item.columnName ?? 'none'}-${item.description}`} className="list-item-card compact breaking-change">
                         <strong>{item.schemaName}.{item.tableName}{item.columnName ? `.${item.columnName}` : ''}</strong>
                         <p className="small">{item.description}</p>
                       </div>
