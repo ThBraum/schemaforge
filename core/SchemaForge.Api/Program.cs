@@ -25,6 +25,8 @@ builder.Services.AddSingleton<IConnectionStore>(_ => new SqliteConnectionStore(a
 builder.Services.AddSingleton<ISavedQueryStore>(_ => new SqliteSavedQueryStore(appDbPath));
 builder.Services.AddSingleton<IQueryHistoryStore>(_ => new SqliteQueryHistoryStore(appDbPath));
 builder.Services.AddSingleton<ISchemaSnapshotStore>(_ => new SqliteSchemaSnapshotStore(appDbPath));
+builder.Services.AddSingleton<IMigrationStore>(_ => new SqliteMigrationStore(appDbPath));
+builder.Services.AddSingleton<IMigrationExecutionStore>(_ => new SqliteMigrationExecutionStore(appDbPath));
 builder.Services.AddSingleton<IDatabaseProvider, PostgresDatabaseProvider>();
 builder.Services.AddSingleton<IDatabaseProvider, MySqlDatabaseProvider>();
 builder.Services.AddSingleton<IDatabaseProviderResolver, DatabaseProviderResolver>();
@@ -34,6 +36,7 @@ builder.Services.AddScoped<QueryHistoryService>();
 builder.Services.AddScoped<SchemaSnapshotService>();
 builder.Services.AddSingleton<ISchemaDiffEngine, SchemaDiffEngine>();
 builder.Services.AddScoped<SchemaDiffService>();
+builder.Services.AddScoped<MigrationService>();
 
 var app = builder.Build();
 app.UseCors();
@@ -87,6 +90,12 @@ app.MapPost("/api/connections", async (ConnectionRequest request, IConnectionSto
         database = connection.Database,
         username = connection.Username,
     });
+});
+
+app.MapDelete("/api/connections/{id:guid}", async (Guid id, IConnectionStore store, CancellationToken ct) =>
+{
+    await store.DeleteAsync(id, ct);
+    return Results.NoContent();
 });
 
 app.MapGet("/api/explorer/schema/{connectionId:guid}", async (Guid connectionId, ExplorerService service, CancellationToken ct) =>
@@ -323,6 +332,161 @@ app.MapGet("/api/schema-diff/export/html", async (Guid sourceSnapshotId, Guid ta
         return Results.File(Encoding.UTF8.GetBytes(html), "text/html", fileName);
 });
 
+static object MapMigration(MigrationDefinition migration)
+{
+    return new
+    {
+        id = migration.Id,
+        connectionId = migration.ConnectionId,
+        name = migration.Name,
+        description = migration.Description,
+        upScript = migration.UpScript,
+        downScript = migration.DownScript,
+        status = ToMigrationStatusString(migration.Status),
+        checksum = migration.Checksum,
+        sourceSnapshotId = migration.SourceSnapshotId,
+        targetSnapshotId = migration.TargetSnapshotId,
+        createdAtUtc = migration.CreatedAtUtc,
+        updatedAtUtc = migration.UpdatedAtUtc,
+    };
+}
+
+static object MapMigrationRun(MigrationExecutionRun run)
+{
+    return new
+    {
+        migrationRunId = run.MigrationRunId,
+        migrationId = run.MigrationId,
+        connectionId = run.ConnectionId,
+        executedAtUtc = run.ExecutedAtUtc,
+        direction = run.Direction == MigrationDirection.Up ? "up" : "down",
+        status = run.Status == MigrationExecutionStatus.Succeeded ? "succeeded" : "failed",
+        executionLog = run.ExecutionLog,
+        durationMs = run.DurationMs,
+        errorMessage = run.ErrorMessage,
+    };
+}
+
+static MigrationStatus? ParseMigrationStatusOrNull(string? status)
+{
+    if (string.IsNullOrWhiteSpace(status))
+    {
+        return null;
+    }
+
+    return status.Trim().ToLowerInvariant() switch
+    {
+        "draft" => MigrationStatus.Draft,
+        "pending" => MigrationStatus.Pending,
+        "applied" => MigrationStatus.Applied,
+        "failed" => MigrationStatus.Failed,
+        "rolledback" => MigrationStatus.RolledBack,
+        _ => throw new InvalidOperationException("Unsupported migration status."),
+    };
+}
+
+static string ToMigrationStatusString(MigrationStatus status)
+{
+    return status switch
+    {
+        MigrationStatus.Draft => "draft",
+        MigrationStatus.Pending => "pending",
+        MigrationStatus.Applied => "applied",
+        MigrationStatus.Failed => "failed",
+        MigrationStatus.RolledBack => "rolledback",
+        _ => throw new InvalidOperationException("Unsupported migration status."),
+    };
+}
+
+app.MapGet("/api/migrations/{connectionId:guid}", async (Guid connectionId, MigrationService service, CancellationToken ct) =>
+{
+    var migrations = await service.ListByConnectionAsync(connectionId, ct);
+    return Results.Ok(migrations.Select(MapMigration));
+});
+
+app.MapGet("/api/migrations/item/{migrationId:guid}", async (Guid migrationId, MigrationService service, CancellationToken ct) =>
+{
+    var migration = await service.GetByIdOrThrowAsync(migrationId, ct);
+    return Results.Ok(MapMigration(migration));
+});
+
+app.MapPost("/api/migrations", async (SaveMigrationRequest request, MigrationService service, CancellationToken ct) =>
+{
+    var migration = await service.UpsertAsync(
+        request.Id,
+        request.ConnectionId,
+        request.Name,
+        request.Description,
+        request.UpScript,
+        request.DownScript,
+        request.SourceSnapshotId,
+        request.TargetSnapshotId,
+        ParseMigrationStatusOrNull(request.Status),
+        ct);
+
+    return Results.Ok(MapMigration(migration));
+});
+
+app.MapPost("/api/migrations/generate-from-diff", async (GenerateMigrationFromDiffRequest request, MigrationService service, CancellationToken ct) =>
+{
+    var migration = await service.CreateDraftFromDiffAsync(
+        request.ConnectionId,
+        request.SourceSnapshotId,
+        request.TargetSnapshotId,
+        request.Name,
+        request.Description,
+        ct);
+
+    return Results.Ok(MapMigration(migration));
+});
+
+app.MapPut("/api/migrations/{id:guid}", async (Guid id, SaveMigrationRequest request, MigrationService service, CancellationToken ct) =>
+{
+    var migration = await service.UpsertAsync(
+        id,
+        request.ConnectionId,
+        request.Name,
+        request.Description,
+        request.UpScript,
+        request.DownScript,
+        request.SourceSnapshotId,
+        request.TargetSnapshotId,
+        ParseMigrationStatusOrNull(request.Status),
+        ct);
+
+    return Results.Ok(MapMigration(migration));
+});
+
+app.MapDelete("/api/migrations/{id:guid}", async (Guid id, MigrationService service, CancellationToken ct) =>
+{
+    await service.DeleteAsync(id, ct);
+    return Results.NoContent();
+});
+
+app.MapPost("/api/migrations/{connectionId:guid}/{migrationId:guid}/apply", async (Guid connectionId, Guid migrationId, MigrationExecutionRequest request, MigrationService service, CancellationToken ct) =>
+{
+    var run = await service.ApplyAsync(connectionId, migrationId, request.ConfirmDestructive, ct);
+    return Results.Ok(MapMigrationRun(run));
+});
+
+app.MapPost("/api/migrations/{connectionId:guid}/{migrationId:guid}/rollback", async (Guid connectionId, Guid migrationId, MigrationExecutionRequest request, MigrationService service, CancellationToken ct) =>
+{
+    var run = await service.RollbackAsync(connectionId, migrationId, request.ConfirmDestructive, ct);
+    return Results.Ok(MapMigrationRun(run));
+});
+
+app.MapGet("/api/migrations/{connectionId:guid}/history", async (Guid connectionId, int? limit, MigrationService service, CancellationToken ct) =>
+{
+    var runs = await service.ListHistoryByConnectionAsync(connectionId, limit ?? 200, ct);
+    return Results.Ok(runs.Select(MapMigrationRun));
+});
+
+app.MapGet("/api/migrations/history/{migrationId:guid}", async (Guid migrationId, int? limit, MigrationService service, CancellationToken ct) =>
+{
+    var runs = await service.ListHistoryByMigrationAsync(migrationId, limit ?? 200, ct);
+    return Results.Ok(runs.Select(MapMigrationRun));
+});
+
 app.Run("http://127.0.0.1:5051");
 
 public sealed record ConnectionRequest(Guid Id, string Name, string DatabaseType, string Host, int Port, string Database, string Username, string? Password);
@@ -330,3 +494,20 @@ public sealed record QueryRequest(string Sql);
 public sealed record SaveSavedQueryRequest(Guid? Id, Guid ConnectionId, string Title, string Sql, string[]? Tags);
 public sealed record CaptureSnapshotRequest(string? Name);
 public sealed record CompareSnapshotsRequest(Guid SourceSnapshotId, Guid TargetSnapshotId);
+public sealed record SaveMigrationRequest(
+    Guid? Id,
+    Guid ConnectionId,
+    string Name,
+    string? Description,
+    string UpScript,
+    string DownScript,
+    string? Status,
+    Guid? SourceSnapshotId,
+    Guid? TargetSnapshotId);
+public sealed record GenerateMigrationFromDiffRequest(
+    Guid ConnectionId,
+    Guid SourceSnapshotId,
+    Guid TargetSnapshotId,
+    string? Name,
+    string? Description);
+public sealed record MigrationExecutionRequest(bool ConfirmDestructive);

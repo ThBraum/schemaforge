@@ -7,6 +7,7 @@ public interface IConnectionStore
     Task<IReadOnlyCollection<SavedConnection>> ListAsync(CancellationToken cancellationToken = default);
     Task<SavedConnection?> GetAsync(Guid id, CancellationToken cancellationToken = default);
     Task SaveAsync(SavedConnection connection, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
 public interface IDatabaseProvider
@@ -15,6 +16,7 @@ public interface IDatabaseProvider
     Task<SchemaSummary> GetSchemaAsync(SavedConnection connection, CancellationToken cancellationToken = default);
     Task<TablePreview> PreviewTableAsync(SavedConnection connection, string schemaName, string tableName, int limit, CancellationToken cancellationToken = default);
     Task<QueryResult> RunQueryAsync(SavedConnection connection, string sql, CancellationToken cancellationToken = default);
+    Task<ScriptExecutionResult> ExecuteScriptAsync(SavedConnection connection, string sql, CancellationToken cancellationToken = default);
     Task<DatabaseStructureSnapshot> CaptureSnapshotStructureAsync(SavedConnection connection, CancellationToken cancellationToken = default);
 }
 
@@ -47,4 +49,19 @@ public interface ISchemaSnapshotStore
 public interface ISchemaDiffEngine
 {
     SchemaDiffResult Compare(SchemaSnapshot sourceSnapshot, SchemaSnapshot targetSnapshot);
+}
+
+public interface IMigrationStore
+{
+    Task<IReadOnlyCollection<MigrationDefinition>> ListByConnectionAsync(Guid connectionId, CancellationToken cancellationToken = default);
+    Task<MigrationDefinition?> GetAsync(Guid id, CancellationToken cancellationToken = default);
+    Task SaveAsync(MigrationDefinition migration, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+}
+
+public interface IMigrationExecutionStore
+{
+    Task AddAsync(MigrationExecutionRun run, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<MigrationExecutionRun>> ListByConnectionAsync(Guid connectionId, int limit, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<MigrationExecutionRun>> ListByMigrationAsync(Guid migrationId, int limit, CancellationToken cancellationToken = default);
 }

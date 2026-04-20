@@ -241,3 +241,34 @@ export interface SchemaDiffResult {
 	indexesRemoved: IndexDiffEntry[];
 	breakingChanges: BreakingChangeEntry[];
 }
+
+export type MigrationStatus = "draft" | "pending" | "applied" | "failed" | "rolledback";
+export type MigrationDirection = "up" | "down";
+export type MigrationExecutionStatus = "succeeded" | "failed";
+
+export interface MigrationItem {
+	id: string;
+	connectionId: string;
+	name: string;
+	description?: string | null;
+	upScript: string;
+	downScript: string;
+	status: MigrationStatus;
+	checksum?: string | null;
+	sourceSnapshotId?: string | null;
+	targetSnapshotId?: string | null;
+	createdAtUtc: string;
+	updatedAtUtc: string;
+}
+
+export interface MigrationExecutionRun {
+	migrationRunId: string;
+	migrationId: string;
+	connectionId: string;
+	executedAtUtc: string;
+	direction: MigrationDirection;
+	status: MigrationExecutionStatus;
+	executionLog?: string | null;
+	durationMs: number;
+	errorMessage?: string | null;
+}

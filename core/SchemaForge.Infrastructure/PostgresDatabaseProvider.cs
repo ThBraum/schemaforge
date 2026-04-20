@@ -239,6 +239,26 @@ order by table_schema, table_name, ordinal_position;";
         };
     }
 
+    public async Task<ScriptExecutionResult> ExecuteScriptAsync(SavedConnection connection, string sql, CancellationToken cancellationToken = default)
+    {
+        await using var db = (Npgsql.NpgsqlConnection)ConnectionStringFactory.CreateRemoteConnection(connection);
+        await db.OpenAsync(cancellationToken);
+
+        var stopwatch = Stopwatch.StartNew();
+        await using var transaction = await db.BeginTransactionAsync(cancellationToken);
+
+        var affectedRows = await db.ExecuteAsync(new CommandDefinition(sql, transaction: transaction, cancellationToken: cancellationToken));
+        await transaction.CommitAsync(cancellationToken);
+        stopwatch.Stop();
+
+        return new ScriptExecutionResult
+        {
+            DurationMs = stopwatch.ElapsedMilliseconds,
+            AffectedRows = affectedRows,
+            OutputLog = $"Script executed successfully. Affected rows: {affectedRows}.",
+        };
+    }
+
     private static TablePreview ToPreview(string schemaName, string tableName, IEnumerable<dynamic> rows)
     {
         var list = rows.Select(row => (IDictionary<string, object?>)row).Select(dict => dict.ToDictionary(k => k.Key, v => v.Value)).ToArray();

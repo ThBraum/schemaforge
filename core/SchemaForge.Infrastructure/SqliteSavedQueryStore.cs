@@ -14,7 +14,13 @@ public sealed class SqliteSavedQueryStore(string dbPath) : ISavedQueryStore
         await EnsureSchemaAsync(connection);
 
         var rows = await connection.QueryAsync<SavedQueryRow>(@"
-select id, connection_id as ConnectionId, title, sql_text as Sql, tags_json as TagsJson, created_at_utc as CreatedAtUtc, updated_at_utc as UpdatedAtUtc
+    select id as Id,
+           connection_id as ConnectionId,
+           title as Title,
+           sql_text as Sql,
+           tags_json as TagsJson,
+           created_at_utc as CreatedAtUtc,
+           updated_at_utc as UpdatedAtUtc
 from app_saved_queries
 where connection_id = @ConnectionId
 order by updated_at_utc desc;", new { ConnectionId = connectionId.ToString() });
@@ -29,7 +35,13 @@ order by updated_at_utc desc;", new { ConnectionId = connectionId.ToString() });
         await EnsureSchemaAsync(connection);
 
         var row = await connection.QuerySingleOrDefaultAsync<SavedQueryRow>(@"
-select id, connection_id as ConnectionId, title, sql_text as Sql, tags_json as TagsJson, created_at_utc as CreatedAtUtc, updated_at_utc as UpdatedAtUtc
+    select id as Id,
+           connection_id as ConnectionId,
+           title as Title,
+           sql_text as Sql,
+           tags_json as TagsJson,
+           created_at_utc as CreatedAtUtc,
+           updated_at_utc as UpdatedAtUtc
 from app_saved_queries
 where id = @Id;", new { Id = id.ToString() });
 
@@ -83,9 +95,20 @@ on conflict(id) do update set
             Title = row.Title,
             Sql = row.Sql,
             Tags = JsonSerializer.Deserialize<string[]>(row.TagsJson) ?? Array.Empty<string>(),
-            CreatedAtUtc = DateTime.SpecifyKind(row.CreatedAtUtc, DateTimeKind.Utc),
-            UpdatedAtUtc = DateTime.SpecifyKind(row.UpdatedAtUtc, DateTimeKind.Utc),
+            CreatedAtUtc = ParseUtc(row.CreatedAtUtc),
+            UpdatedAtUtc = ParseUtc(row.UpdatedAtUtc),
         };
+    }
+
+    private static DateTimeOffset ParseUtc(string value)
+    {
+        return DateTimeOffset.TryParse(
+            value,
+            null,
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+            out var parsed)
+            ? parsed
+            : throw new InvalidOperationException($"Invalid UTC timestamp '{value}'.");
     }
 
     private static async Task EnsureSchemaAsync(Microsoft.Data.Sqlite.SqliteConnection connection)
@@ -110,12 +133,14 @@ create index if not exists idx_app_saved_queries_updated_at on app_saved_queries
         await connection.ExecuteAsync(sql);
     }
 
-    private sealed record SavedQueryRow(
-        string Id,
-        string ConnectionId,
-        string Title,
-        string Sql,
-        string TagsJson,
-        DateTime CreatedAtUtc,
-        DateTime UpdatedAtUtc);
+    private sealed class SavedQueryRow
+    {
+        public string Id { get; init; } = string.Empty;
+        public string ConnectionId { get; init; } = string.Empty;
+        public string Title { get; init; } = string.Empty;
+        public string Sql { get; init; } = string.Empty;
+        public string TagsJson { get; init; } = string.Empty;
+        public string CreatedAtUtc { get; init; } = string.Empty;
+        public string UpdatedAtUtc { get; init; } = string.Empty;
+    }
 }
