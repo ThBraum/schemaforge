@@ -43,3 +43,8 @@ public interface ISchemaSnapshotStore
     Task<SchemaSnapshot?> GetAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<SchemaSnapshot>> ListByConnectionAsync(Guid connectionId, CancellationToken cancellationToken = default);
 }
+
+public interface ISchemaDiffEngine
+{
+    SchemaDiffResult Compare(SchemaSnapshot sourceSnapshot, SchemaSnapshot targetSnapshot);
+}
